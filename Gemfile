@@ -5,7 +5,7 @@ gemspec
 
 
 gem 'sidekiq'
-gem 'activerecord'
+gem 'activerecord', '3.2.13' 
 
 group :test do
   gem 'pry'
