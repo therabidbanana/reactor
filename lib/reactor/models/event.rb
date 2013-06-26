@@ -15,8 +15,8 @@ class Reactor::Event < ActiveRecord::Base
   end
 
   def self.publish(type, data = {})
-    message = Reactor::Message.new(data)
     event = self.for(type)
+    message = Reactor::Message.new(data.merge(event: event))
     if (message.at)
       delay_until(message.at).process event.id, message.data
     else

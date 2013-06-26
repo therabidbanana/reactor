@@ -69,7 +69,7 @@ describe Reactor::Subscriber do
   describe 'matcher' do
     it 'can be set to star to bind to all events' do
       MySubscriber.create!(matcher: '*')
-      MySubscriber.any_instance.should_receive(:fire).with({'random' => 'data'})
+      MySubscriber.any_instance.should_receive(:fire).with({'random' => 'data', 'event_id' => Reactor::Event.for(:this_event).id, 'event_type' => 'Reactor::Event'})
       Reactor::Event.publish(:this_event, {random: 'data'})
     end
   end

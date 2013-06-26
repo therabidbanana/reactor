@@ -7,8 +7,8 @@ describe Reactor::Event do
   let(:event) { Reactor::Event.for(:user_did_this) }
 
   describe 'publish' do
-    it 'fires the first process' do
-      Reactor::Event.should_receive(:process).with(event.id, 'actor_id' => '1')
+    it 'fires the first process and sets message event_id' do
+      Reactor::Event.should_receive(:process).with(event.id, 'actor_id' => '1', 'event_id' => event.id, 'event_type' => 'Reactor::Event')
       Reactor::Event.publish(:user_did_this, actor_id: '1')
     end
   end
