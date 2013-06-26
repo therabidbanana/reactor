@@ -26,11 +26,11 @@ class Reactor::Subscriber < ActiveRecord::Base
       Reactor::Subscriber.find(subscriber_id).fire data
     end
 
-    def subscribes_to(name, delay: nil)
+    def subscribes_to(name = nil, delay: nil, matcher: nil)
       @delay_amount = delay
       if Reactor::Event.table_exists? && Reactor::Subscriber.table_exists?
-        if name == '*'
-          where(type: self.to_s, matcher: '*').first_or_create!
+        if matcher
+          where(matcher: matcher).first_or_create!
         else
           event = Reactor::Event.for(name)
           @instance = where(event_id: event.id).first_or_create!

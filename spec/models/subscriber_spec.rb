@@ -49,7 +49,7 @@ describe Reactor::Subscriber do
         it 'creates new subscriber' do
           expect {
             MySubscriber.class_eval do
-              subscribes_to '*'
+              subscribes_to matcher: '*'
             end
           }.to change { Reactor::Subscriber.count }.by(1)
         end
@@ -58,7 +58,7 @@ describe Reactor::Subscriber do
           MySubscriber.where(matcher: '*').first_or_create!
           expect {
             MySubscriber.class_eval do
-              subscribes_to '*'
+              subscribes_to matcher: '*'
             end
           }.to change { Reactor::Subscriber.count }.by(0)
         end
