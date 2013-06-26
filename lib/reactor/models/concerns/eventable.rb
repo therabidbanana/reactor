@@ -7,7 +7,7 @@ module Reactor::Eventable
   end
 
   def publish(name, data = {})
-    Reactor::Event.publish(name, data.merge(actor_id: self.id, actor_type: self.class.to_s) )
+    Reactor::Event.publish(name, data.merge(actor: self) )
   end
 
   module ClassMethods
@@ -25,7 +25,7 @@ module Reactor::Eventable
   def schedule_events
     self.class.events.each do |name, data|
       Reactor::Event.delay.publish name, data.merge(
-      at: send(data[:at]), actor_id: self.id
+        at: send(data[:at]), actor: self
       ).except(:watch)
     end
   end
@@ -34,9 +34,9 @@ module Reactor::Eventable
     self.class.events.each do |name, data|
       if send("#{data[:watch] || data[:at]}_changed?")
         Reactor::Event.delay.reschedule name,
-        at: send(data[:at]),
-        actor_id: self.id,
-        was: send(data[:at], was: true)
+          at: send(data[:at]),
+          actor: self,
+          was: send(data[:at], was: true)
       end
     end
   end

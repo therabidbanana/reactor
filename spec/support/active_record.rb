@@ -12,16 +12,8 @@ ActiveRecord::Migration.create_table :auctions do |t|
   t.timestamps
 end
 
-
-ActiveRecord::Migration.create_table :events do |t|
-  t.string :type
-
-  t.timestamps
-end
-
 ActiveRecord::Migration.create_table :subscribers do |t|
-  t.integer :event_id
-  t.string :matcher
+  t.string :event
   t.string :type
 
   t.timestamps

@@ -1,8 +1,11 @@
 class Reactor::Subscriber < ActiveRecord::Base
   belongs_to :event
-  attr_accessible :event_id, :event, :matcher
+  attr_accessible :event
   attr_accessor :message
 
+  def event=(event)
+    write_attribute :event, event.to_s
+  end
 
   def fire(data)
     self.message = Reactor::Message.new(data)
@@ -26,15 +29,10 @@ class Reactor::Subscriber < ActiveRecord::Base
       Reactor::Subscriber.find(subscriber_id).fire data
     end
 
-    def subscribes_to(name = nil, delay: nil, matcher: nil)
+    def subscribes_to(name = nil, delay: nil)
       @delay_amount = delay
-      if Reactor::Event.table_exists? && Reactor::Subscriber.table_exists?
-        if matcher
-          where(matcher: matcher).first_or_create!
-        else
-          event = Reactor::Event.for(name)
-          @instance = where(event_id: event.id).first_or_create!
-        end
+      if Reactor::Subscriber.table_exists?
+        @instance = where(event: name.to_s).first_or_create!
       end
     end
 

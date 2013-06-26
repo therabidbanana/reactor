@@ -14,7 +14,7 @@ describe Reactor::Subscriber do
   #it { should validate_presence_of :event }
 
   describe 'fire' do
-    subject { MySubscriber.create(event: Reactor::Event.for(:you_name_it)).fire some: 'random', event: 'data' }
+    subject { MySubscriber.create(event: :you_name_it).fire some: 'random', event: 'data' }
 
     its(:message) { should be_a Reactor::Message }
     its('message.some') { should == 'random' }
@@ -25,14 +25,6 @@ describe Reactor::Subscriber do
   end
 
   describe '.subscribes_to class helper' do
-    it 'ensures event exists' do
-      expect {
-        MySubscriber.class_eval do
-          subscribes_to :my_custom_event
-        end
-      }.to change { Reactor::Event.count }.by(1)
-    end
-
     describe 'ensuring subscriber exists and is tied to event' do
       it 'binds 1-1 when name given' do
         expect {
@@ -40,7 +32,6 @@ describe Reactor::Subscriber do
             subscribes_to :event_times
           end
         }.to change { Reactor::Subscriber.count }.by(1)
-        Reactor::Subscriber.last.event.type.should == 'EventTimes'
       end
 
       context 'binds to all when star is given' do
@@ -49,16 +40,16 @@ describe Reactor::Subscriber do
         it 'creates new subscriber' do
           expect {
             MySubscriber.class_eval do
-              subscribes_to matcher: '*'
+              subscribes_to '*'
             end
           }.to change { Reactor::Subscriber.count }.by(1)
         end
 
         it 'doesnt create' do
-          MySubscriber.where(matcher: '*').first_or_create!
+          MySubscriber.where(event: '*').first_or_create!
           expect {
             MySubscriber.class_eval do
-              subscribes_to matcher: '*'
+              subscribes_to '*'
             end
           }.to change { Reactor::Subscriber.count }.by(0)
         end
@@ -68,8 +59,8 @@ describe Reactor::Subscriber do
 
   describe 'matcher' do
     it 'can be set to star to bind to all events' do
-      MySubscriber.create!(matcher: '*')
-      MySubscriber.any_instance.should_receive(:fire).with({'random' => 'data', 'event_id' => Reactor::Event.for(:this_event).id, 'event_type' => 'Reactor::Event'})
+      MySubscriber.create!(event: '*')
+      MySubscriber.any_instance.should_receive(:fire).with({'random' => 'data', 'event' => :this_event})
       Reactor::Event.publish(:this_event, {random: 'data'})
     end
   end

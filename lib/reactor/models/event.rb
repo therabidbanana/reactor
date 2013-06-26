@@ -1,26 +1,12 @@
-class Reactor::Event < ActiveRecord::Base
+class Reactor::Event
   include Reactor::OptionallySubclassable
-  has_many :subscribers
 
-  attr_accessible :type
-
-  validates_uniqueness_of :type
-
-  def type=(type)
-    write_attribute :type, type.to_s.camelize
-  end
-
-  def self.for(type)
-    where(type: type.to_s.camelize).first_or_create
-  end
-
-  def self.publish(type, data = {})
-    event = self.for(type)
-    message = Reactor::Message.new(data.merge(event: event))
+  def self.publish(name, data = {})
+    message = Reactor::Message.new(data.merge(event: name))
     if (message.at)
-      delay_until(message.at).process event.id, message.data
+      delay_until(message.at).process name, message.data
     else
-      delay.process event.id, message.data
+      delay.process name, message.data
     end
   end
 
@@ -36,14 +22,13 @@ class Reactor::Event < ActiveRecord::Base
     name
   end
 
-  def self.process(event_id, data)
-    event = find(event_id)
-
-    event.subscribers.each do |subscriber|
+  def self.process(name, data)
+    Reactor::Subscriber.where(event: name.to_s).each do |subscriber|
       Reactor::Subscriber.delay.fire subscriber.id, data
     end
 
-    Reactor::Subscriber.where(matcher: '*').each do |s|
+    #TODO: support more matching?
+    Reactor::Subscriber.where(event: '*').each do |s|
       Reactor::Subscriber.delay.fire s.id, data
     end
   end

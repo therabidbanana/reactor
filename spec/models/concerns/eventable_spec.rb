@@ -12,7 +12,7 @@ describe Reactor::Eventable do
   describe 'publish' do
     let(:auction) { Auction.create }
     it 'publishes an event with actor_id and actor_type set as self' do
-      Reactor::Event.should_receive(:publish).with(:an_event, {what: 'the', actor_id: auction.id, actor_type: auction.class.to_s}).twice
+      Reactor::Event.should_receive(:publish).with(:an_event, {what: 'the', actor: auction}).twice
       auction.publish(:an_event, {what: 'the'})
     end
   end
