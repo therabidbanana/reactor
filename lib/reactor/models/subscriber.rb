@@ -1,5 +1,4 @@
 class Reactor::Subscriber < ActiveRecord::Base
-  belongs_to :event
   attr_accessible :event
   attr_accessor :message
 
@@ -31,9 +30,6 @@ class Reactor::Subscriber < ActiveRecord::Base
 
     def subscribes_to(name = nil, delay: nil)
       @delay_amount = delay
-      if Reactor::Subscriber.table_exists?
-        @instance = where(event: name.to_s).first_or_create!
-      end
     end
 
     def delay_amount

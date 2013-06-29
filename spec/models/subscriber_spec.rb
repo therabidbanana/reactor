@@ -10,9 +10,6 @@ end
 
 describe Reactor::Subscriber do
 
-  #it { should belong_to :event }
-  #it { should validate_presence_of :event }
-
   describe 'fire' do
     subject { MySubscriber.create(event: :you_name_it).fire some: 'random', event: 'data' }
 
@@ -25,36 +22,36 @@ describe Reactor::Subscriber do
   end
 
   describe '.subscribes_to class helper' do
-    describe 'ensuring subscriber exists and is tied to event' do
-      it 'binds 1-1 when name given' do
-        expect {
-          MySubscriber.class_eval do
-            subscribes_to :event_times
-          end
-        }.to change { Reactor::Subscriber.count }.by(1)
-      end
-
-      context 'binds to all when star is given' do
-        after { MySubscriber.destroy_all }
-
-        it 'creates new subscriber' do
-          expect {
-            MySubscriber.class_eval do
-              subscribes_to '*'
-            end
-          }.to change { Reactor::Subscriber.count }.by(1)
-        end
-
-        it 'doesnt create' do
-          MySubscriber.where(event: '*').first_or_create!
-          expect {
-            MySubscriber.class_eval do
-              subscribes_to '*'
-            end
-          }.to change { Reactor::Subscriber.count }.by(0)
-        end
-      end
-    end
+    #describe 'ensuring subscriber exists and is tied to event' do
+    #  it 'binds 1-1 when name given' do
+    #    expect {
+    #      MySubscriber.class_eval do
+    #        subscribes_to :event_times
+    #      end
+    #    }.to change { Reactor::Subscriber.count }.by(1)
+    #  end
+    #
+    #  context 'binds to all when star is given' do
+    #    after { MySubscriber.destroy_all }
+    #
+    #    it 'creates new subscriber' do
+    #      expect {
+    #        MySubscriber.class_eval do
+    #          subscribes_to '*'
+    #        end
+    #      }.to change { Reactor::Subscriber.count }.by(1)
+    #    end
+    #
+    #    it 'doesnt create' do
+    #      MySubscriber.where(event: '*').first_or_create!
+    #      expect {
+    #        MySubscriber.class_eval do
+    #          subscribes_to '*'
+    #        end
+    #      }.to change { Reactor::Subscriber.count }.by(0)
+    #    end
+    #  end
+    #end
   end
 
   describe 'matcher' do
