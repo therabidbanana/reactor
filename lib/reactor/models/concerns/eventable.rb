@@ -36,7 +36,7 @@ module Reactor::Eventable
         Reactor::Event.delay.reschedule name,
           at: send(data[:at]),
           actor: self,
-          was: send(data[:at], was: true)
+          was: send("#{data[:at]}_was")
       end
     end
   end

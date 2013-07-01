@@ -30,14 +30,13 @@ class Reactor::Subscriber < ActiveRecord::Base
 
     def subscribes_to(name = nil, delay: nil)
       @delay_amount = delay
+      #subscribers << name
+      #TODO: REMEMBER SUBSCRIBERS so we can define them in code as well as with a row in the DB
     end
 
     def delay_amount
       @delay_amount
     end
 
-    def instance
-      @instance
-    end
   end
 end

@@ -35,7 +35,7 @@ class Reactor::Event
 
   private
 
-  def self.scheduled_jobs
+  def self.scheduled_jobs(options = {})
     Sidekiq.redis do |r|
       from = options[:from] ? options[:from].to_f.to_s : '-inf'
       to = options[:to] ? options[:to].to_f.to_s : '+inf'
