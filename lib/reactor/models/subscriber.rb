@@ -7,7 +7,7 @@ class Reactor::Subscriber < ActiveRecord::Base
   end
 
   def fire(data)
-    self.message = Reactor::Message.new(data)
+    self.message = Reactor::Event.new(data)
     instance_exec &self.class.on_fire
     self
   end

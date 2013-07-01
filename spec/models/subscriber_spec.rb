@@ -13,7 +13,7 @@ describe Reactor::Subscriber do
   describe 'fire' do
     subject { MySubscriber.create(event: :you_name_it).fire some: 'random', event: 'data' }
 
-    its(:message) { should be_a Reactor::Message }
+    its(:message) { should be_a Reactor::Event }
     its('message.some') { should == 'random' }
 
     it 'executes block given' do
