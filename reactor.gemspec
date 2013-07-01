@@ -7,9 +7,9 @@ Gem::Specification.new do |spec|
   spec.name          = "reactor"
   spec.version       = Reactor::VERSION
   spec.authors       = ["winfred", "walt"]
-  spec.email         = ["winfred@developerauction.com", "walt@developerauction.com"]
+  spec.email         = ["winfred@developerauction.com", "walt@developerauction.com", "curtis@developerauction.com", "nate@developerauction.com"]
   spec.description   = %q{ rails chrono reactor }
-  spec.summary       = %q{  }
+  spec.summary       = %q{ Sidekiq/ActiveRecord pubsub lib }
   spec.homepage      = ""
   spec.license       = "MIT"
 
