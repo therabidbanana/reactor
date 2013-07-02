@@ -24,18 +24,18 @@ module Reactor::Eventable
 
   def schedule_events
     self.class.events.each do |name, data|
-      data = data.merge(
+      event = data.merge(
           at: ( data[:at] ? send(data[:at]) : nil), actor: self
       ).except(:watch)
       need_to_fire = case (ifarg = data[:if])
                        when Proc
-                         what = instance_exec &ifarg
+                         instance_exec &ifarg
                        when Symbol
                          send(ifarg)
                        else
                          true
                      end
-      Reactor::Event.delay.publish name, data if need_to_fire
+      Reactor::Event.delay.publish name, event if need_to_fire
     end
   end
 
