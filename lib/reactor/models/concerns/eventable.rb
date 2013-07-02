@@ -26,7 +26,7 @@ module Reactor::Eventable
     self.class.events.each do |name, data|
       event = data.merge(
           at: ( data[:at] ? send(data[:at]) : nil), actor: self
-      ).except(:watch)
+      ).except(:watch, :if)
       need_to_fire = case (ifarg = data[:if])
                        when Proc
                          instance_exec &ifarg
