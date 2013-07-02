@@ -1,6 +1,8 @@
 require 'spec_helper'
 
 class Auction < ActiveRecord::Base
+  attr_accessor :we_want_it
+
   def ring_timeout
     created_at + 30.seconds
   end
@@ -11,9 +13,11 @@ class Auction < ActiveRecord::Base
 
   publishes :bell
   publishes :ring, at: :ring_timeout, watch: :name
+  publishes :conditional_event_on_save, if: -> { we_want_it }
 end
 
 class TestSubscriber < Reactor::Subscriber
+  @@called = false
 
   on_fire do
     @@called = true
@@ -42,6 +46,18 @@ describe Reactor::Eventable do
       auction.start_at = 1.day.from_now
       auction.save
       TestSubscriber.class_variable_get(:@@called).should be_false
+    end
+
+    it 'can fire events onsave for any condition' do
+      TestSubscriber.create! event: :conditional_event_on_save
+      auction
+      TestSubscriber.class_variable_set(:@@called, false)
+      auction.start_at = 1.day.from_now
+      auction.save
+      TestSubscriber.class_variable_get(:@@called).should be_false
+      auction.we_want_it = true
+      auction.save
+      TestSubscriber.class_variable_get(:@@called).should be_true
     end
   end
 end

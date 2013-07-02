@@ -27,7 +27,15 @@ module Reactor::Eventable
       data = data.merge(
           at: ( data[:at] ? send(data[:at]) : nil), actor: self
       ).except(:watch)
-      Reactor::Event.delay.publish name, data
+      need_to_fire = case (ifarg = data[:if])
+                       when Proc
+                         what = instance_exec &ifarg
+                       when Symbol
+                         send(ifarg)
+                       else
+                         true
+                     end
+      Reactor::Event.delay.publish name, data if need_to_fire
     end
   end
 
@@ -38,6 +46,16 @@ module Reactor::Eventable
           at: send(data[:at]),
           actor: self,
           was: send("#{data[:at]}_was")
+      end
+
+      if data[:if]
+        need_to_fire = case (ifarg = data[:if])
+                         when Proc
+                           instance_exec &ifarg
+                         when Symbol
+                           send(ifarg)
+                       end
+        Reactor::Event.delay.publish name, actor: self if need_to_fire
       end
     end
   end
