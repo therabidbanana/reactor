@@ -2,8 +2,8 @@ module Reactor::Eventable
   extend ActiveSupport::Concern
 
   included do
-    after_create :schedule_events
-    after_update :reschedule_events
+    after_commit :schedule_events, if: :persisted?, on: :create
+    after_commit :reschedule_events, if: :persisted?, on: :update
   end
 
   def publish(name, data = {})
