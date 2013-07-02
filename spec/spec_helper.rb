@@ -6,6 +6,7 @@ require 'support/active_record'
 require 'sidekiq'
 require 'sidekiq/testing/inline'
 require 'reactor'
+require 'reactor/testing/matchers'
 
 Sidekiq.configure_server do |config|
   config.redis = { url: ENV["REDISTOGO_URL"] }

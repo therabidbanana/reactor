@@ -40,6 +40,7 @@ class Reactor::Event
   end
 
   def self.process(name, data)
+    # fire database listeners
     Reactor::Subscriber.where(event: name.to_s).each do |subscriber|
       Reactor::Subscriber.delay.fire subscriber.id, data
     end

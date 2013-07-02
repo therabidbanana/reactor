@@ -24,15 +24,16 @@ module Reactor::Eventable
 
   def schedule_events
     self.class.events.each do |name, data|
-      Reactor::Event.delay.publish name, data.merge(
-        at: send(data[:at]), actor: self
+      data = data.merge(
+          at: ( data[:at] ? send(data[:at]) : nil), actor: self
       ).except(:watch)
+      Reactor::Event.delay.publish name, data
     end
   end
 
   def reschedule_events
     self.class.events.each do |name, data|
-      if send("#{data[:watch] || data[:at]}_changed?")
+      if data[:at] && send("#{data[:watch] || data[:at]}_changed?")
         Reactor::Event.delay.reschedule name,
           at: send(data[:at]),
           actor: self,
