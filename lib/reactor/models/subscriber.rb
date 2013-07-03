@@ -32,7 +32,7 @@ class Reactor::Subscriber < ActiveRecord::Base
       define_singleton_method :exists! do
         chain = where(event: name)
         data.each do |key, value|
-          chain = chain.where("data @> '#{key}=#{value}'")
+          chain = chain.where("subscribers.data @> ?", "#{key}=>#{value}")
         end
         chain.first_or_create!(data)
       end
