@@ -29,7 +29,7 @@ class Reactor::Subscriber < ActiveRecord::Base
       #TODO: REMEMBER SUBSCRIBERS so we can define them in code as well as with a row in the DB
       # until then, here's a helper to make it easy to create with random data in postgres
       # total crap I know but whatever
-      define_singleton_method :first_or_create! do
+      define_singleton_method :exists! do
         chain = where(event: name)
         data.each do |key, value|
           chain = chain.where("data @> '#{key}=#{value}'")
