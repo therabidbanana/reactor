@@ -47,7 +47,7 @@ module Reactor::Eventable
         Reactor::Event.delay.reschedule name,
           at: send(data[:at]),
           actor: ( data[:actor] ? send(data[:actor]) : self ),
-          target: ( data[:target] ? send(data[:target]) : nil),
+          target: ( data[:target] ? self : nil),
           was: send("#{data[:at]}_was")
       end
 
