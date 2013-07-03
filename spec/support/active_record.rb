@@ -8,6 +8,7 @@ ActiveRecord::Migration.create_table :auctions do |t|
   t.string :name
   t.datetime :start_at
   t.datetime :close_at
+  t.integer :pet_id
 
   t.timestamps
 end

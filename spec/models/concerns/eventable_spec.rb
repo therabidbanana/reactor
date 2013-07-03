@@ -1,7 +1,11 @@
 require 'spec_helper'
 
+class Pet < ActiveRecord::Base
+end
+
 class Auction < ActiveRecord::Base
   attr_accessor :we_want_it
+  belongs_to :pet
 
   def ring_timeout
     created_at + 30.seconds
@@ -14,6 +18,7 @@ class Auction < ActiveRecord::Base
   publishes :bell
   publishes :ring, at: :ring_timeout, watch: :name
   publishes :conditional_event_on_save, if: -> { we_want_it }
+  publishes :woof, actor: :pet, target: :self
 end
 
 class TestSubscriber < Reactor::Subscriber
@@ -26,7 +31,8 @@ end
 
 describe Reactor::Eventable do
   describe 'publish' do
-    let(:auction) { Auction.create! }
+    let(:pet) { Pet.create! }
+    let(:auction) { Auction.create!(pet: pet) }
 
     it 'publishes an event with actor_id and actor_type set as self' do
       auction
@@ -36,6 +42,14 @@ describe Reactor::Eventable do
         data[:actor].should == auction
       end
       auction.publish(:an_event, {what: 'the'})
+    end
+
+    it 'publishes an event with provided actor and target methods' do
+      Reactor::Event.should_receive(:publish) do |name, data|
+        name.should == :woof
+        data[:actor].should == pet
+      end
+      auction
     end
 
     it 'supports immediate events (on create) that get fired once' do
