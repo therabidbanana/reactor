@@ -12,10 +12,6 @@ class Reactor::Subscriber < ActiveRecord::Base
     self
   end
 
-  def delay_amount
-    self.class.delay_amount
-  end
-
   class << self
     def on_fire(&block)
       if block
@@ -28,15 +24,18 @@ class Reactor::Subscriber < ActiveRecord::Base
       Reactor::Subscriber.find(subscriber_id).fire data
     end
 
-    def subscribes_to(name = nil, delay: nil)
-      @delay_amount = delay
+    def subscribes_to(name = nil, data = {})
       #subscribers << name
       #TODO: REMEMBER SUBSCRIBERS so we can define them in code as well as with a row in the DB
+      # until then, here's a helper to make it easy to create with random data in postgres
+      # total crap I know but whatever
+      define_singleton_method :first_or_create! do
+        chain = where(event: name)
+        data.each do |key, value|
+          chain = chain.where("data @> '#{key}=#{value}'")
+        end
+        chain.first_or_create!(data)
+      end
     end
-
-    def delay_amount
-      @delay_amount
-    end
-
   end
 end
