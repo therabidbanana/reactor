@@ -26,7 +26,7 @@ module Reactor::Eventable
     self.class.events.each do |name, data|
       event = data.merge(
           actor: ( data[:actor] ? send(data[:actor]) : self ),
-          target: ( data[:target] ? send(data[:target]) : nil),
+          target: ( data[:target] ? self : nil),
           at: ( data[:at] ? send(data[:at]) : nil)
       ).except(:watch, :if)
       need_to_fire = case (ifarg = data[:if])
