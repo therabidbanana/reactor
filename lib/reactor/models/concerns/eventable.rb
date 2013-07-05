@@ -43,14 +43,14 @@ module Reactor::Eventable
 
   def reschedule_events
     self.class.events.each do |name, data|
-      if data[:at] && send("#{data[:watch] || data[:at]}_changed?")
+      attr_changed_method = "#{data[:watch] || data[:at]}_changed?"
+      if data[:at] && respond_to?(attr_changed_method) && send(attr_changed_method)
         Reactor::Event.delay.reschedule name,
           at: send(data[:at]),
           actor: ( data[:actor] ? send(data[:actor]) : self ),
           target: ( data[:target] ? self : nil),
           was: send("#{data[:at]}_was")
       end
-
       if data[:if]
         need_to_fire = case (ifarg = data[:if])
                          when Proc

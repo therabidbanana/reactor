@@ -24,10 +24,16 @@ class Reactor::Event
 
   def self.publish(name, data = {})
     message = new(data.merge(event: name))
-    if (message.at)
-      delay_until(message.at).process name, message.data
-    else
+    #if (message.at)
+    #  delay_until(message.at).process name, message.data
+    #else
+    #  delay.process name, message.data
+    #end
+
+    if message.at.nil?
       delay.process name, message.data
+    elsif message.at.future?
+      delay_until(message.at).process name, message.data
     end
   end
 
