@@ -1,7 +1,7 @@
 RSpec::Matchers.define :publish_event do |name, data = {}|
 
   match do |block|
-    defaults = {:actor => anything, :target => anything}
+    defaults = {:actor => anything, :target => anything, at: nil}
     Reactor::Event.should_receive(:publish).with(name, defaults.merge(data))
     block.call
   end
@@ -10,7 +10,7 @@ end
 RSpec::Matchers.define :publish_events do |*args|
 
   match do |block|
-    defaults = {:actor => anything, :target => anything}
+    defaults = {:actor => anything, :target => anything, at: nil}
 
     args.each do |event|
       case event
