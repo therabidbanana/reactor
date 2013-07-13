@@ -2,7 +2,7 @@ require 'spec_helper'
 
 
 class Auction < ActiveRecord::Base
-  subscribes_to :bid_made do |event|
+  on_event :bid_made do |event|
     event.target.update_column :status, 'first_bid_made'
   end
 end
