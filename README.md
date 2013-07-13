@@ -1,6 +1,14 @@
 # Reactor
 
-TODO: Write a gem description
+Warning: this is under active development!
+
+This gem aims to provide the following tools to augment your ActiveRecord & Sidekiq stack.
+
+ 1. Barebones event API through Sidekiq to publish whatever you want
+ 2. Database-driven API to manage subscribers so that users may rewire whatever you let them (transactional emails, campaigns, etc...)
+ 3. Static/Code-driven API to subscribe a basic ruby block to an event.
+ 4. A new communication pattern between your ActiveRecord models that runs asynchronously through Sidekiq.
+    a. describe model lifecycle events and callbacks with class-level helper methods/DSL
 
 ## Installation
 
@@ -18,7 +26,31 @@ Or install it yourself as:
 
 ## Usage
 
-TODO: Write usage instructions here
+Well, this is evolving, so it's probably best to go read the specs.
+
+
+### Barebones API
+
+   Event.publish(:event_name, any: 'data', you: 'want')
+
+### ActiveModel extensions
+
+#### Publishable
+
+  Describe lifecycle events like so
+
+    publishes :my_model_created
+    publishes :state_has_changed, if: -> { state_has_changed? }
+
+#### Subscribable
+
+  *New in 0.3*
+
+  You can now bind any block to an event in your models like so
+
+    subscribes_to :any_event do |event|
+      MyModel.find(event.target).do_something_about_it!
+    end
 
 ## Contributing
 

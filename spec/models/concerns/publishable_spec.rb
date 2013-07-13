@@ -30,7 +30,7 @@ class TestSubscriber < Reactor::Subscriber
   end
 end
 
-describe Reactor::Eventable do
+describe Reactor::Publishable do
   before { TestSubscriber.destroy_all }
   describe 'publish' do
     let(:pet) { Pet.create! }

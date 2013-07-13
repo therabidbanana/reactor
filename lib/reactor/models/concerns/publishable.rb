@@ -1,4 +1,4 @@
-module Reactor::Eventable
+module Reactor::Publishable
   extend ActiveSupport::Concern
 
   included do

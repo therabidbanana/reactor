@@ -55,6 +55,12 @@ class Reactor::Event
     Reactor::Subscriber.where(event: '*').each do |s|
       Reactor::Subscriber.delay.fire s.id, data
     end
+
+    if (static_subscribers = Reactor::STATIC_SUBSCRIBERS[name.to_s] || []).any?
+      static_subscribers.each do |callback|
+        callback.call(Reactor::Event.new(data.merge(event: name.to_s)))
+      end
+    end
   end
 
   private
