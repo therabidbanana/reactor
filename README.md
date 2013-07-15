@@ -48,7 +48,7 @@ Well, this is evolving, so it's probably best to go read the specs.
 
   You can now bind any block to an event in your models like so
 
-    subscribes_to :any_event do |event|
+    on_event :any_event do |event|
       MyModel.find(event.target).do_something_about_it!
     end
 

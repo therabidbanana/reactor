@@ -6,7 +6,7 @@ require "reactor/models/subscriber"
 require "reactor/event"
 
 module Reactor
-  STATIC_SUBSCRIBERS = {}
+  SUBSCRIBERS = {}
 end
 
 ActiveRecord::Base.send(:include, Reactor::Publishable)

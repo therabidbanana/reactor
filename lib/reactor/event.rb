@@ -56,9 +56,14 @@ class Reactor::Event
       Reactor::Subscriber.delay.fire s.id, data
     end
 
-    if (static_subscribers = Reactor::STATIC_SUBSCRIBERS[name.to_s] || []).any?
+    if (static_subscribers = Reactor::SUBSCRIBERS[name.to_s] || []).any?
       static_subscribers.each do |callback|
-        callback.call(Reactor::Event.new(data.merge(event: name.to_s)))
+        case callback
+          when Hash
+            callback.keys.first.send callback.values.first, Reactor::Event.new(data.merge(event: name.to_s))
+          else
+            callback.call Reactor::Event.new(data.merge(event: name.to_s))
+        end
       end
     end
   end
