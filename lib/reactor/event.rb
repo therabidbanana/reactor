@@ -58,17 +58,16 @@ class Reactor::Event
 
     if (static_subscribers = Reactor::SUBSCRIBERS[name.to_s] || []).any?
       static_subscribers.each do |callback|
-        case callback
-          when Hash
-            callback.keys.first.send callback.values.first, Reactor::Event.new(data.merge(event: name.to_s))
+        delay = callback[:options].try(:[], :delay) || 0
+        case method = callback[:method]
+          when Symbol
+            callback[:source].delay_for(delay).send method, Reactor::Event.new(data.merge(event: name.to_s))
           else
-            callback.call Reactor::Event.new(data.merge(event: name.to_s))
+            method.call Reactor::Event.new(data.merge(event: name.to_s))
         end
       end
     end
   end
-
-  private
 
   def self.scheduled_jobs(options = {})
     Sidekiq.redis do |r|
@@ -81,6 +80,8 @@ class Reactor::Event
   def self.remove_scheduled_job(job)
     Sidekiq.redis { |r| r.zrem 'schedule', MultiJson.encode(job) }
   end
+
+  private
 
   def try_setter(method, object, *args)
     if object.is_a? ActiveRecord::Base
