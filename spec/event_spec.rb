@@ -24,9 +24,15 @@ describe Reactor::Event do
   end
 
   describe 'process' do
+    before { Reactor::Subscriber.create(event: :user_did_this) }
+    after { Reactor::Subscriber.destroy_all }
     it 'fires all subscribers' do
-      Reactor::Subscriber.create(event: :user_did_this)
-      Reactor::Subscriber.any_instance.should_receive(:fire).with(actor_id: '1')
+      Reactor::Subscriber.any_instance.should_receive(:fire).with(hash_including(actor_id: '1'))
+      Reactor::Event.process(event_name, actor_id: '1')
+    end
+
+    it 'sets a fired_at key in event data' do
+      Reactor::Subscriber.any_instance.should_receive(:fire).with(hash_including(fired_at: anything))
       Reactor::Event.process(event_name, actor_id: '1')
     end
   end
