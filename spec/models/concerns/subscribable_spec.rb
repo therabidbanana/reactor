@@ -16,6 +16,7 @@ class Auction < ActiveRecord::Base
 end
 
 describe Reactor::Subscribable do
+  let(:scheduled) { Sidekiq::ScheduledSet.new }
 
   describe 'on_event' do
     it 'binds block of code statically to event being fired' do
@@ -30,8 +31,8 @@ describe Reactor::Subscribable do
       end
 
       it 'can be delayed', :sidekiq do
-        Reactor::Event.process(:pooped, {})
-        job = Reactor::Event.scheduled_jobs(from: 4.minutes.from_now, to: 6.minutes.from_now).last
+        Reactor::Event.perform('pooped', {})
+        job = scheduled.detect{|job| job.score > 4.minutes.from_now.to_f && job.score <= 5.minutes.from_now.to_f }
         job.should be_present
         job['args'].last.should include("pick_up_poop")
       end

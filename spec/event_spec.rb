@@ -17,23 +17,40 @@ describe Reactor::Event do
   let(:event_name) { :user_did_this }
 
   describe 'publish' do
-    it 'fires the first process and sets message event_id' do
-      Reactor::Event.should_receive(:process).with(event_name, 'actor_id' => '1', 'event' => :user_did_this)
+    it 'fires the first perform and sets message event_id' do
+      Reactor::Event.should_receive(:perform_async).with(event_name, 'actor_id' => '1', 'event' => :user_did_this)
       Reactor::Event.publish(:user_did_this, actor_id: '1')
     end
   end
 
-  describe 'process' do
+  describe 'perform' do
     before { Reactor::Subscriber.create(event: :user_did_this) }
     after { Reactor::Subscriber.destroy_all }
     it 'fires all subscribers' do
       Reactor::Subscriber.any_instance.should_receive(:fire).with(hash_including(actor_id: '1'))
-      Reactor::Event.process(event_name, actor_id: '1')
+      Reactor::Event.perform(event_name, actor_id: '1')
     end
 
     it 'sets a fired_at key in event data' do
       Reactor::Subscriber.any_instance.should_receive(:fire).with(hash_including(fired_at: anything))
-      Reactor::Event.process(event_name, actor_id: '1')
+      Reactor::Event.perform(event_name, actor_id: '1')
+    end
+  end
+
+  describe 'reschedule', :sidekiq do
+    let(:scheduled) { Sidekiq::ScheduledSet.new }
+    let(:time) { 1.hour.from_now }
+
+    it 'can schedule and reschedule an event in the future' do
+      expect {
+        jid = Reactor::Event.publish :turtle_time, at: time
+        scheduled.find_job(jid).score.should == time.to_f
+      }.to change { scheduled.size }.by(1)
+
+      expect {
+        jid = Reactor::Event.reschedule :turtle_time, at: (time + 2.hours), was: time
+        scheduled.find_job(jid).score.should == (time + 2.hours).to_f
+      }.to_not change { scheduled.size }
     end
   end
 
