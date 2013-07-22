@@ -8,15 +8,15 @@ class Auction < ActiveRecord::Base
   belongs_to :pet
 
   def ring_timeout
-    created_at + 30.seconds
+    start_at + 30.seconds
   end
 
   def ring_timeout_was
-    created_at + 10.seconds
+    previous_changes[:start_at][0] + 30.seconds
   end
 
   publishes :bell
-  publishes :ring, at: :ring_timeout, watch: :name
+  publishes :ring, at: :ring_timeout, watch: :start_at
   publishes :begin, at: :start_at
   publishes :conditional_event_on_save, if: -> { we_want_it }
   publishes :woof, actor: :pet, target: :self
@@ -55,20 +55,31 @@ describe Reactor::Publishable do
     end
 
     it 'reschedules an event when the :at time changes' do
-      Reactor::Event.should_receive(:publish) do |name, data|
-        name.should == :begin
-        data[:at].should == auction.start_at
-        data[:actor].should == auction
-      end
-      auction
+      start_at = auction.start_at
+      new_start_at = start_at + 1.week
+      Reactor::Event.should_receive(:reschedule).with :ring, anything
+      Reactor::Event.should_receive(:reschedule).with :begin,
+        hash_including(
+          at: new_start_at,
+          actor: auction,
+          was: start_at
+        )
+      auction.start_at = new_start_at
+      auction.save!
+    end
 
-      another_start_at = auction.start_at + 1.week
-      Reactor::Event.should_receive(:reschedule) do |name, data|
-        name.should == :begin
-        data[:at].should == another_start_at
-        data[:actor].should == auction
-      end
-      auction.reload.start_at = another_start_at
+    it 'reschedules an event when the :watch field changes' do
+      ring_time = auction.ring_timeout
+      new_start_at = auction.start_at + 1.week
+      new_ring_time = new_start_at + 30.seconds
+      Reactor::Event.should_receive(:reschedule).with :begin, anything
+      Reactor::Event.should_receive(:reschedule).with :ring,
+        hash_including(
+          at: new_ring_time,
+          actor: auction,
+          was: ring_time
+        )
+      auction.start_at = new_start_at
       auction.save!
     end
 

@@ -49,7 +49,7 @@ module Reactor::Publishable
           at: send(data[:at]),
           actor: ( data[:actor] ? send(data[:actor]) : self ),
           target: ( data[:target] ? self : nil),
-          was: previous_changes[attr_changed_method][0]
+          was: previous_changes[data[:at]].try(:first) || send("#{data[:at]}_was")
       end
       if data[:if]
         need_to_fire = case (ifarg = data[:if])
