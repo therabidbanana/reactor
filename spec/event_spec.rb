@@ -35,6 +35,11 @@ describe Reactor::Event do
       Reactor::Subscriber.any_instance.should_receive(:fire).with(hash_including(fired_at: anything))
       Reactor::Event.perform(event_name, actor_id: '1')
     end
+
+    it 'works with the legacy .process method, too' do
+      Reactor::Subscriber.any_instance.should_receive(:fire).with(hash_including(actor_id: '1'))
+      Reactor::Event.process(event_name, actor_id: '1')
+    end
   end
 
   describe 'reschedule', :sidekiq do
