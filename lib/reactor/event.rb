@@ -55,7 +55,7 @@ class Reactor::Event
     def process(name, data)
       new.perform(name, data)
     end
-    deprecate process: 'use Event#perform instead'
+    deprecate process: 'use Reactor::Event#perform instead'
 
     def publish(name, data = {})
       message = new(data.merge(event: name))
@@ -70,8 +70,9 @@ class Reactor::Event
     def reschedule(name, data = {})
       scheduled_jobs = Sidekiq::ScheduledSet.new
       job = scheduled_jobs.detect do |job|
+        job['class'] == self.class.name.to_s
         job['args'].first == name.to_s &&
-        job.score == data[:was].to_f
+        job.score.to_i == data[:was].to_i
       end
       job.delete
       publish(name, data.except(:was)) if data[:at].future?

@@ -37,7 +37,7 @@ module Reactor::Publishable
                        else
                          true
                      end
-      Reactor::Event.delay.publish name, event if need_to_fire
+      Reactor::Event.publish name, event if need_to_fire
     end
   end
 
@@ -45,7 +45,7 @@ module Reactor::Publishable
     self.class.events.each do |name, data|
       attr_changed_method = "#{data[:watch] || data[:at]}_changed?"
       if data[:at] && respond_to?(attr_changed_method) && send(attr_changed_method)
-        Reactor::Event.delay.reschedule name,
+        Reactor::Event.reschedule name,
           at: send(data[:at]),
           actor: ( data[:actor] ? send(data[:actor]) : self ),
           target: ( data[:target] ? self : nil),
@@ -58,7 +58,7 @@ module Reactor::Publishable
                          when Symbol
                            send(ifarg)
                        end
-        Reactor::Event.delay.publish name, actor: self if need_to_fire
+        Reactor::Event.publish name, actor: self if need_to_fire
       end
     end
   end
