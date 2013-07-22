@@ -74,6 +74,7 @@ class Reactor::Event
         job['args'].first == name.to_s &&
         job.score.to_i == data[:was].to_i
       end
+      return if job.nil?
       job.delete
       publish(name, data.except(:was)) if data[:at].future?
     end

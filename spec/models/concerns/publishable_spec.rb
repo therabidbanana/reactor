@@ -4,7 +4,7 @@ class Pet < ActiveRecord::Base
 end
 
 class Auction < ActiveRecord::Base
-  attr_accessor :we_want_it, :arbitrary_date
+  attr_accessor :we_want_it
   belongs_to :pet
 
   def ring_timeout
@@ -17,7 +17,7 @@ class Auction < ActiveRecord::Base
 
   publishes :bell
   publishes :ring, at: :ring_timeout, watch: :name
-  publishes :begin, at: :arbitrary_date
+  publishes :begin, at: :start_at
   publishes :conditional_event_on_save, if: -> { we_want_it }
   publishes :woof, actor: :pet, target: :self
 end
@@ -34,7 +34,7 @@ describe Reactor::Publishable do
   before { TestSubscriber.destroy_all }
   describe 'publish' do
     let(:pet) { Pet.create! }
-    let(:auction) { Auction.create!(pet: pet, arbitrary_date: DateTime.new(2012,12,21)) }
+    let(:auction) { Auction.create!(pet: pet, start_at: DateTime.new(2012,12,21)) }
 
     it 'publishes an event with actor_id and actor_type set as self' do
       auction
@@ -52,6 +52,24 @@ describe Reactor::Publishable do
         data[:actor].should == pet
       end
       auction
+    end
+
+    it 'reschedules an event when the :at time changes' do
+      Reactor::Event.should_receive(:publish) do |name, data|
+        name.should == :begin
+        data[:at].should == auction.start_at
+        data[:actor].should == auction
+      end
+      auction
+
+      another_start_at = auction.start_at + 1.week
+      Reactor::Event.should_receive(:reschedule) do |name, data|
+        name.should == :begin
+        data[:at].should == another_start_at
+        data[:actor].should == auction
+      end
+      auction.reload.start_at = another_start_at
+      auction.save!
     end
 
     it 'supports immediate events (on create) that get fired once' do
@@ -72,7 +90,7 @@ describe Reactor::Publishable do
 
     it 'does publish an event scheduled for the future' do
       TestSubscriber.create! event: :begin
-      Auction.create!(pet: pet, arbitrary_date: Time.current + 1.week)
+      Auction.create!(pet: pet, start_at: Time.current + 1.week)
       TestSubscriber.class_variable_get(:@@called).should be_true
     end
 

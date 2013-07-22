@@ -43,13 +43,13 @@ module Reactor::Publishable
 
   def reschedule_events
     self.class.events.each do |name, data|
-      attr_changed_method = "#{data[:watch] || data[:at]}_changed?"
-      if data[:at] && respond_to?(attr_changed_method) && send(attr_changed_method)
+      attr_changed_method = data[:watch] || data[:at]
+      if data[:at] && previous_changes[attr_changed_method]
         Reactor::Event.reschedule name,
           at: send(data[:at]),
           actor: ( data[:actor] ? send(data[:actor]) : self ),
           target: ( data[:target] ? self : nil),
-          was: send("#{data[:at]}_was")
+          was: previous_changes[attr_changed_method][0]
       end
       if data[:if]
         need_to_fire = case (ifarg = data[:if])
