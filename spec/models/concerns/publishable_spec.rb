@@ -17,7 +17,7 @@ class Auction < ActiveRecord::Base
 
   publishes :bell
   publishes :ring, at: :ring_timeout, watch: :start_at
-  publishes :begin, at: :start_at
+  publishes :begin, at: :start_at, additional_info: 'curtis was here'
   publishes :conditional_event_on_save, if: -> { we_want_it }
   publishes :woof, actor: :pet, target: :self
 end
@@ -62,7 +62,8 @@ describe Reactor::Publishable do
         hash_including(
           at: new_start_at,
           actor: auction,
-          was: start_at
+          was: start_at,
+          additional_info: 'curtis was here'
         )
       auction.start_at = new_start_at
       auction.save!

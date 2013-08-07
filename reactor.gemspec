@@ -6,8 +6,8 @@ require 'reactor/version'
 Gem::Specification.new do |spec|
   spec.name          = "reactor"
   spec.version       = Reactor::VERSION
-  spec.authors       = ["winfred", "walt"]
-  spec.email         = ["winfred@developerauction.com", "walt@developerauction.com", "curtis@developerauction.com", "nate@developerauction.com"]
+  spec.authors       = ["winfred", "walt", "nate", "cgag", "petermin"]
+  spec.email         = ["winfred@developerauction.com", "walt@developerauction.com", "curtis@developerauction.com", "nate@developerauction.com", "kengteh.min@gmail.com"]
   spec.description   = %q{ rails chrono reactor }
   spec.summary       = %q{ Sidekiq/ActiveRecord pubsub lib }
   spec.homepage      = ""

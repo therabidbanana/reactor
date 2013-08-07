@@ -70,7 +70,7 @@ class Reactor::Event
     def reschedule(name, data = {})
       scheduled_jobs = Sidekiq::ScheduledSet.new
       job = scheduled_jobs.detect do |job|
-        job['class'] == self.class.name.to_s
+        job['class'] == self.name.to_s &&
         job['args'].first == name.to_s &&
         job.score.to_i == data[:was].to_i
       end

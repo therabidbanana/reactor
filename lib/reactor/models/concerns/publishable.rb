@@ -2,7 +2,7 @@ module Reactor::Publishable
   extend ActiveSupport::Concern
 
   included do
-    after_commit :schedule_events, if: :persisted?, on: :create
+    after_commit :schedule_events, if: :persisted?
     after_commit :reschedule_events, if: :persisted?, on: :update
   end
 
@@ -31,11 +31,11 @@ module Reactor::Publishable
       ).except(:watch, :if)
       need_to_fire = case (ifarg = data[:if])
                        when Proc
-                         instance_exec &ifarg
+                         instance_exec(&ifarg)
                        when Symbol
                          send(ifarg)
                        else
-                         true
+                         transaction_include_action?(:create)
                      end
       Reactor::Event.publish name, event if need_to_fire
     end
@@ -46,20 +46,13 @@ module Reactor::Publishable
       attr_changed_method = data[:watch] || data[:at]
       if data[:at] && previous_changes[attr_changed_method]
         Reactor::Event.reschedule name,
-          at: send(data[:at]),
-          actor: ( data[:actor] ? send(data[:actor]) : self ),
-          target: ( data[:target] ? self : nil),
-          was: previous_changes[data[:at]].try(:first) || send("#{data[:at]}_was")
-      end
-      if data[:if]
-        need_to_fire = case (ifarg = data[:if])
-                         when Proc
-                           instance_exec &ifarg
-                         when Symbol
-                           send(ifarg)
-                       end
-        Reactor::Event.publish name, actor: self if need_to_fire
+          data.merge(
+            at: send(data[:at]),
+            actor: ( data[:actor] ? send(data[:actor]) : self ),
+            target: ( data[:target] ? self : nil),
+            was: previous_changes[data[:at]].try(:first) || send("#{data[:at]}_was"))
       end
     end
   end
+
 end
