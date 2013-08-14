@@ -12,7 +12,7 @@ class Reactor::Event
   end
 
   def perform(name, data)
-    data.merge!(fired_at: Time.current)
+    data.merge!(fired_at: Time.current, name: name)
     Reactor::Subscriber.where(event: name).each do |subscriber|
       Reactor::Subscriber.delay.fire subscriber.id, data
     end
@@ -22,14 +22,15 @@ class Reactor::Event
       Reactor::Subscriber.delay.fire s.id, data
     end
 
-    if (static_subscribers = Reactor::SUBSCRIBERS[name] || []).any?
+    static_subscribers =   (Reactor::SUBSCRIBERS[name.to_s]  || []) | (Reactor::SUBSCRIBERS['*'] || [])
+    if static_subscribers.any?
       static_subscribers.each do |callback|
         delay = callback[:options].try(:[], :delay) || 0
         case method = callback[:method]
           when Symbol
-            callback[:source].delay_for(delay).send method, Reactor::Event.new(data.merge(event: name))
+            callback[:source].delay_for(delay).send method, Reactor::Event.new(data)
           else
-            method.call Reactor::Event.new(data.merge(event: name))
+            method.call Reactor::Event.new(data)
         end
       end
     end

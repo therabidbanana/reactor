@@ -38,7 +38,7 @@ describe Reactor::Event do
 
     it 'works with the legacy .process method, too' do
       Reactor::Subscriber.any_instance.should_receive(:fire).with(hash_including(actor_id: '1'))
-      Reactor::Event.process(event_name, actor_id: '1')
+      Reactor::Event.perform(event_name, actor_id: '1')
     end
   end
 
