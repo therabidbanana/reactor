@@ -53,11 +53,6 @@ class Reactor::Event
       new.perform(name, data)
     end
 
-    def process(name, data)
-      new.perform(name, data)
-    end
-    deprecate process: 'use Reactor::Event#perform instead'
-
     def publish(name, data = {})
       message = new(data.merge(event: name))
 

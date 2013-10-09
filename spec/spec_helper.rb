@@ -32,16 +32,12 @@ RSpec.configure do |config|
   # in which case it will use the real Redis-backed Sidekiq queue
   config.before(:each, :sidekiq) do
     Sidekiq.redis{|r| r.flushall }
-    Sidekiq::Client.class_eval do
-      singleton_class.class_eval do
-        alias_method :raw_push, :raw_push_old
-      end
-    end
+    Sidekiq::Testing.disable!
   end
 
 
   config.after(:each, :sidekiq) do
-    load "sidekiq/testing/inline.rb"
+    Sidekiq::Testing.inline!
   end
 
 end
