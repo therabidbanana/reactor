@@ -7,6 +7,8 @@ require "reactor/event"
 
 module Reactor
   SUBSCRIBERS = {}
+  module StaticSubscribers
+  end
 end
 
 ActiveRecord::Base.send(:include, Reactor::Publishable)

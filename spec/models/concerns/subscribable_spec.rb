@@ -33,11 +33,10 @@ describe Reactor::Subscribable do
         Reactor::Event.publish(:puppy_delivered)
       end
 
-      it 'can be delayed', :sidekiq do
+      it 'can be delayed' do
+        Auction.should_receive(:pick_up_poop)
+        Auction.should_receive(:delay_for).with(5.minutes).and_return(Auction)
         Reactor::Event.perform('pooped', {})
-        job = scheduled.detect{|job| job.score > 4.minutes.from_now.to_f && job.score <= 5.minutes.from_now.to_f }
-        job.should be_present
-        job['args'].last.should include("pick_up_poop")
       end
     end
 

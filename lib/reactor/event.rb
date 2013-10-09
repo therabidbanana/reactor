@@ -22,18 +22,7 @@ class Reactor::Event
       Reactor::Subscriber.delay.fire s.id, data
     end
 
-    static_subscribers =   (Reactor::SUBSCRIBERS[name.to_s]  || []) | (Reactor::SUBSCRIBERS['*'] || [])
-    if static_subscribers.any?
-      static_subscribers.each do |callback|
-        delay = callback[:options].try(:[], :delay) || 0
-        case method = callback[:method]
-          when Symbol
-            callback[:source].delay_for(delay).send method, Reactor::Event.new(data)
-          else
-            method.call Reactor::Event.new(data)
-        end
-      end
-    end
+    ((Reactor::SUBSCRIBERS[name.to_s]  || []) | (Reactor::SUBSCRIBERS['*'] || [])).each {|s| s.perform_async(data) }
   end
 
   def method_missing(method, *args)

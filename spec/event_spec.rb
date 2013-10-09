@@ -40,6 +40,25 @@ describe Reactor::Event do
       Reactor::Subscriber.any_instance.should_receive(:fire).with(hash_including(actor_id: '1'))
       Reactor::Event.perform(event_name, actor_id: '1')
     end
+
+    describe 'when subscriber throws exception', :sidekiq do
+      let(:mock) { mock(:thing, some_method: 3) }
+      let(:barfing_event) { Reactor::Event.perform('barfed', somethin: 'up') }
+
+      before do
+        Reactor::SUBSCRIBERS['barfed'] ||= []
+        Reactor::SUBSCRIBERS['barfed'] << Reactor::Subscribable::StaticSubscriberFactory.create('barfed') do |event|
+          raise 'UNEXPECTED!'
+        end
+        Reactor::SUBSCRIBERS['barfed'] << Reactor::Subscribable::StaticSubscriberFactory.create('barfed') do |event|
+          mock.some_method
+        end
+      end
+
+      it 'doesnt matter because it runs in a separate worker process' do
+        expect { barfing_event }.to_not raise_exception
+      end
+    end
   end
 
   describe 'reschedule', :sidekiq do
