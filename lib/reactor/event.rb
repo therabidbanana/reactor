@@ -13,16 +13,8 @@ class Reactor::Event
 
   def perform(name, data)
     data.merge!(fired_at: Time.current, name: name)
-    Reactor::Subscriber.where(event: name).each do |subscriber|
-      Reactor::Subscriber.delay.fire subscriber.id, data
-    end
-
-    #TODO: support more matching?
-    Reactor::Subscriber.where(event: '*').each do |s|
-      Reactor::Subscriber.delay.fire s.id, data
-    end
-
-    ((Reactor::SUBSCRIBERS[name.to_s]  || []) | (Reactor::SUBSCRIBERS['*'] || [])).each {|s| s.perform_async(data) }
+    fire_database_driven_subscribers(data, name)
+    fire_block_subscribers(data, name)
   end
 
   def method_missing(method, *args)
@@ -90,5 +82,20 @@ class Reactor::Event
 
   def initialize_polymorphic_association(method)
     data["#{method}_type"].constantize.find(data["#{method}_id"])
+  end
+
+  def fire_database_driven_subscribers(data, name)
+    Reactor::Subscriber.where(event: name).each do |subscriber|
+      Reactor::Subscriber.delay.fire subscriber.id, data
+    end
+
+    #TODO: support more matching?
+    Reactor::Subscriber.where(event: '*').each do |s|
+      Reactor::Subscriber.delay.fire s.id, data
+    end
+  end
+
+  def fire_block_subscribers(data, name)
+    ((Reactor::SUBSCRIBERS[name.to_s] || []) | (Reactor::SUBSCRIBERS['*'] || [])).each { |s| s.perform_async(data) }
   end
 end
