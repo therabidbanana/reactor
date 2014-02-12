@@ -2,8 +2,10 @@ module Reactor::Subscribable
   extend ActiveSupport::Concern
 
   module ClassMethods
-    def on_event(event, method = nil, options = {}, &block)
-      (Reactor::SUBSCRIBERS[event.to_s] ||= []).push(StaticSubscriberFactory.create event, method, {source: self}.merge(options), &block)
+    def on_event(*args, &block)
+      options = args.extract_options!
+      event, method = args
+      (Reactor::SUBSCRIBERS[event.to_s] ||= []).push(StaticSubscriberFactory.create(event, method, {source: self}.merge(options), &block))
     end
   end
 
@@ -17,7 +19,7 @@ module Reactor::Subscribable
         class #{new_class}
           include Sidekiq::Worker
 
-          cattr_accessor :method, :delay, :source
+          cattr_accessor :method, :delay, :source, :in_memory
 
           def perform(data)
             event = Reactor::Event.new(data)
@@ -27,6 +29,14 @@ module Reactor::Subscribable
               @@method.call(event)
             end
           end
+
+          def self.perform_where_needed(data)
+            if @@in_memory
+              new.perform(data)
+            else
+              perform_async(data)
+            end
+          end
         end
       }
 
@@ -34,6 +44,7 @@ module Reactor::Subscribable
       new_class.method = method || block
       new_class.delay = options[:delay] || 0
       new_class.source = options[:source]
+      new_class.in_memory = options[:in_memory]
       new_class
     end
   end

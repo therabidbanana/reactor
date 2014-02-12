@@ -13,6 +13,10 @@ class Auction < ActiveRecord::Base
     event.actor.more_puppies! if event.name == 'another_event'
   end
 
+  on_event :cat_delivered, in_memory: true do |event|
+    puppies!
+  end
+
   def self.ring_bell(event)
     pp "ring ring! #{event}"
   end
@@ -48,6 +52,19 @@ describe Reactor::Subscribable do
     it 'accepts wildcard event name' do
       Auction.any_instance.should_receive(:more_puppies!)
       Reactor::Event.publish(:another_event, actor: Auction.create)
+    end
+
+    describe 'in_memory flag' do
+      it 'doesnt fire perform_async when true' do
+        Auction.should_receive(:puppies!)
+        Reactor::StaticSubscribers::CatDeliveredHandler0.should_not_receive(:perform_async)
+        Reactor::Event.publish(:cat_delivered)
+      end
+
+      it 'fires perform_async when falsey' do
+        Reactor::StaticSubscribers::WildcardHandler0.should_receive(:perform_async)
+        Reactor::Event.publish(:puppy_delivered)
+      end
     end
   end
 end

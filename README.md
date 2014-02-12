@@ -44,12 +44,18 @@ Well, this is evolving, so it's probably best to go read the specs.
 
 #### Subscribable
 
-  *New in 0.3*
-
   You can now bind any block to an event in your models like so
 
     on_event :any_event do |event|
-      MyModel.find(event.target).do_something_about_it!
+      event.target.do_something_about_it!
+    end
+
+  Static subscribers like these are automatically placed into Sidekiq and executed in the background
+
+  It's also possible to run a subscriber block in memory like so
+
+    on_event :any_event, in_memory: true do |event|
+      event.target.do_something_about_it_and_make_the_user_wait!
     end
 
 ## Contributing
