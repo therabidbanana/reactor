@@ -1,5 +1,4 @@
 class Reactor::Subscriber < ActiveRecord::Base
-  attr_accessible :event
   attr_accessor :message
 
   def event=(event)
