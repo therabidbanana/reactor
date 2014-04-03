@@ -23,9 +23,10 @@ module Reactor::Subscribable
         class Reactor::StaticSubscribers::#{new_class}
           include Sidekiq::Worker
 
-          cattr_accessor :method, :delay, :source, :in_memory
+          cattr_accessor :method, :delay, :source, :in_memory, :dont_perform
 
           def perform(data)
+            return :__perform_aborted__ if @@dont_perform && !Reactor::TEST_MODE_SUBSCRIBERS.include?(@@source)
             event = Reactor::Event.new(data)
             if @@method.is_a?(Symbol)
               @@source.delay_for(@@delay).send(@@method, event)
@@ -44,12 +45,13 @@ module Reactor::Subscribable
         end
       }
 
-      new_class = "Reactor::StaticSubscribers::#{new_class}".constantize
-      new_class.method = method || block
-      new_class.delay = options[:delay] || 0
-      new_class.source = options[:source]
-      new_class.in_memory = options[:in_memory]
-      new_class
+      "Reactor::StaticSubscribers::#{new_class}".constantize.tap do |klass|
+        klass.method = method || block
+        klass.delay = options[:delay] || 0
+        klass.source = options[:source]
+        klass.in_memory = options[:in_memory]
+        klass.dont_perform = Reactor.test_mode?
+      end
     end
   end
 end
