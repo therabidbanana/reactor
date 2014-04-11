@@ -1,12 +1,12 @@
 require 'spec_helper'
 
-
 class Auction < ActiveRecord::Base
   on_event :bid_made do |event|
     event.target.update_column :status, 'first_bid_made'
   end
 
   on_event :puppy_delivered, :ring_bell
+  on_event :puppy_delivered, -> (event) { }
   on_event :any_event, -> (event) {  puppies! }
   on_event :pooped, :pick_up_poop, delay: 5.minutes
   on_event '*' do |event|
@@ -29,6 +29,13 @@ describe Reactor::Subscribable do
     it 'binds block of code statically to event being fired' do
       Auction.any_instance.should_receive(:update_column).with(:status, 'first_bid_made')
       Reactor::Event.publish(:bid_made, target: Auction.create)
+    end
+
+    describe 'building uniquely named subscriber handler classes' do
+      it 'adds a static subscriber to the global lookup constant' do
+        expect(Reactor::SUBSCRIBERS['puppy_delivered'][0]).to eq(Reactor::StaticSubscribers::PuppyDeliveredHandler0)
+        expect(Reactor::SUBSCRIBERS['puppy_delivered'][1]).to eq(Reactor::StaticSubscribers::PuppyDeliveredHandler1)
+      end
     end
 
     describe 'binding symbol of class method' do

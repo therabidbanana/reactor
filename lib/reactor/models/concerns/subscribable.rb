@@ -13,10 +13,14 @@ module Reactor::Subscribable
 
     def self.create(event, method = nil, options = {}, &block)
       handler_class_prefix = event == '*' ? 'Wildcard': event.to_s.camelize
-      new_class = "Reactor::StaticSubscribers::#{handler_class_prefix}Handler#{Reactor::SUBSCRIBERS[event.to_s].size}"
+      i = 0
+      begin
+        new_class = "#{handler_class_prefix}Handler#{i}"
+        i+= 1
+      end while Reactor::StaticSubscribers.const_defined?(new_class)
 
       eval %Q{
-        class #{new_class}
+        class Reactor::StaticSubscribers::#{new_class}
           include Sidekiq::Worker
 
           cattr_accessor :method, :delay, :source, :in_memory
@@ -40,7 +44,7 @@ module Reactor::Subscribable
         end
       }
 
-      new_class = new_class.constantize
+      new_class = "Reactor::StaticSubscribers::#{new_class}".constantize
       new_class.method = method || block
       new_class.delay = options[:delay] || 0
       new_class.source = options[:source]
