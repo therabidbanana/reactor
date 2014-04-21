@@ -24,7 +24,7 @@ describe Reactor::Event do
   end
 
   describe 'perform' do
-    before { Reactor::Subscriber.create(event: :user_did_this) }
+    before { Reactor::Subscriber.create(event_name: :user_did_this) }
     after { Reactor::Subscriber.destroy_all }
     it 'fires all subscribers' do
       Reactor::Subscriber.any_instance.should_receive(:fire).with(hash_including(actor_id: '1'))

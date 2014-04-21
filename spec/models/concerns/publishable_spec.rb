@@ -85,7 +85,7 @@ describe Reactor::Publishable do
     end
 
     it 'supports immediate events (on create) that get fired once' do
-      TestSubscriber.create! event: :bell
+      TestSubscriber.create! event_name: :bell
       auction
       TestSubscriber.class_variable_get(:@@called).should be_true
       TestSubscriber.class_variable_set(:@@called, false)
@@ -95,19 +95,20 @@ describe Reactor::Publishable do
     end
 
     it 'does not publish an event scheduled for the past' do
-      TestSubscriber.create! event: :begin
+      TestSubscriber.create! event_name: :begin
       auction
       TestSubscriber.class_variable_get(:@@called).should be_false
     end
 
     it 'does publish an event scheduled for the future' do
-      TestSubscriber.create! event: :begin
+      TestSubscriber.create! event_name: :begin
       Auction.create!(pet: pet, start_at: Time.current + 1.week)
+
       TestSubscriber.class_variable_get(:@@called).should be_true
     end
 
     it 'can fire events onsave for any condition' do
-      TestSubscriber.create! event: :conditional_event_on_save
+      TestSubscriber.create! event_name: :conditional_event_on_save
       auction
       TestSubscriber.class_variable_set(:@@called, false)
       auction.start_at = 1.day.from_now

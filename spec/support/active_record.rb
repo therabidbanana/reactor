@@ -14,7 +14,7 @@ ActiveRecord::Migration.create_table :auctions do |t|
 end
 
 ActiveRecord::Migration.create_table :subscribers do |t|
-  t.string :event
+  t.string :event_name
   t.string :type
 
   t.timestamps

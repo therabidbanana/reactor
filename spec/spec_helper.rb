@@ -5,6 +5,7 @@ require 'pry'
 require 'support/active_record'
 require 'sidekiq'
 require 'sidekiq/testing/inline'
+require 'sidekiq/api'
 require 'reactor'
 require 'reactor/testing/matchers'
 

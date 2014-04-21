@@ -1,12 +1,12 @@
 class Reactor::Subscriber < ActiveRecord::Base
-  attr_accessor :message
+  attr_accessor :event
 
-  def event=(event)
-    write_attribute :event, event.to_s
+  def event_name=(event)
+    write_attribute :event_name, event.to_s
   end
 
   def fire(data)
-    self.message = Reactor::Event.new(data)
+    self.event = Reactor::Event.new(data)
     instance_exec &self.class.on_fire
     self
   end
@@ -21,20 +21,6 @@ class Reactor::Subscriber < ActiveRecord::Base
 
     def fire(subscriber_id, data)
       Reactor::Subscriber.find(subscriber_id).fire data
-    end
-
-    def subscribes_to(name = nil, data = {})
-      #subscribers << name
-      #TODO: REMEMBER SUBSCRIBERS so we can define them in code as well as with a row in the DB
-      # until then, here's a helper to make it easy to create with random data in postgres
-      # total crap I know but whatever
-      define_singleton_method :exists! do
-        chain = where(event: name)
-        data.each do |key, value|
-          chain = chain.where("subscribers.data @> ?", "#{key}=>#{value}")
-        end
-        chain.first_or_create!(data)
-      end
     end
   end
 end
