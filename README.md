@@ -31,7 +31,9 @@ Well, this is evolving, so it's probably best to go read the specs.
 
 ### Barebones API
 
-   Event.publish(:event_name, any: 'data', you: 'want')
+```ruby
+Event.publish(:event_name, any: 'data', you: 'want')
+```
 
 ### ActiveModel extensions
 
@@ -39,24 +41,48 @@ Well, this is evolving, so it's probably best to go read the specs.
 
   Describe lifecycle events like so
 
-    publishes :my_model_created
-    publishes :state_has_changed, if: -> { state_has_changed? }
+```ruby
+publishes :my_model_created
+publishes :state_has_changed, if: -> { state_has_changed? }
+```
 
 #### Subscribable
 
   You can now bind any block to an event in your models like so
 
-    on_event :any_event do |event|
-      event.target.do_something_about_it!
-    end
+```ruby
+on_event :any_event do |event|
+  event.target.do_something_about_it!
+end
+```
 
   Static subscribers like these are automatically placed into Sidekiq and executed in the background
 
   It's also possible to run a subscriber block in memory like so
 
-    on_event :any_event, in_memory: true do |event|
-      event.target.do_something_about_it_and_make_the_user_wait!
-    end
+```ruby
+on_event :any_event, in_memory: true do |event|
+  event.target.do_something_about_it_and_make_the_user_wait!
+end
+```
+
+### Testing
+
+Calling `Reactor.test_mode!` enables test mode.  (You should call this as early as possible, before your subscriber classes
+are declared).  In test mode, no subscribers will fire unless they are specifically enabled, which can be accomplished
+by calling
+```ruby
+Reactor.enable_test_mode_subscriber(MyAwesomeSubscriberClass)
+```
+
+We also provide
+```ruby
+Reactor.with_subscriber_enabled(MyClass) do
+  # stuff
+end
+```
+
+for your testing convenience.
 
 ## Contributing
 

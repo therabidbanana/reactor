@@ -22,6 +22,12 @@ class Auction < ActiveRecord::Base
   end
 end
 
+Reactor.in_test_mode do
+  class TestModeAuction < ActiveRecord::Base
+    on_event :test_puppy_delivered, -> (event) { pp "success" }
+  end
+end
+
 describe Reactor::Subscribable do
   let(:scheduled) { Sidekiq::ScheduledSet.new }
 
@@ -71,6 +77,19 @@ describe Reactor::Subscribable do
       it 'fires perform_async when falsey' do
         Reactor::StaticSubscribers::WildcardHandler0.should_receive(:perform_async)
         Reactor::Event.publish(:puppy_delivered)
+      end
+    end
+
+    describe '#perform' do
+      it 'returns :__perform_aborted__ when Reactor is in test mode' do
+        Reactor::StaticSubscribers::TestPuppyDeliveredHandler0.new.perform({}).should == :__perform_aborted__
+        Reactor::Event.publish(:test_puppy_delivered)
+      end
+
+      it 'performs normally when specifically enabled' do
+        Reactor.enable_test_mode_subscriber(TestModeAuction)
+        Reactor::StaticSubscribers::TestPuppyDeliveredHandler0.new.perform({}).should_not == :__perform_aborted__
+        Reactor::Event.publish(:test_puppy_delivered)
       end
     end
   end
