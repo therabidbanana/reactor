@@ -1,5 +1,7 @@
 # Reactor
 
+### A Sidekiq-backed pub/sub layer for your Rails app.
+
 Warning: this is under active development!
 
 This gem aims to provide the following tools to augment your ActiveRecord & Sidekiq stack.
@@ -32,7 +34,7 @@ Well, this is evolving, so it's probably best to go read the specs.
 ### Barebones API
 
 ```ruby
-Event.publish(:event_name, any: 'data', you: 'want')
+Reactor::Event.publish(:event_name, any: 'data', you: 'want')
 ```
 
 ### ActiveModel extensions
