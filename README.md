@@ -1,4 +1,4 @@
-# Reactor
+# reactor.gem
 
 ### A Sidekiq-backed pub/sub layer for your Rails app.
 
