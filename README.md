@@ -114,20 +114,48 @@ end
 
 Once you write your own action_event to describe your event data model's base attributes, your ResourceActionable endpoints will now fire events that map like so (for the example above):
 
-index => "pets_indexed"
-show => "pet_viewed", target: @pet
-new => "new_pet_form_viewed"
-edit => "edit_pet_form_viewed", target: @pet
-create =>
-  when valid: "pet_created", target: @pet, attributes: params[:pet]
-  when invalid: "pet_create_failed", errors: @pet.errors, attributes: params[:pet]
+<dl>
+<dt>index =></dt>
+<dd>"pets_indexed"</dd>
+</dl>
+ 
+<dl>
+<dt>show =></dt>
+<dd>"pet_viewed", target: @pet</dd>
+</dl>
 
-update =>
-  when valid: "pet_updated", target: @pet, changes: @pet.previous_changes.as_json
-  when invalid: "pet_update_failed", target: @pet,
+<dl>
+<dt>new =></dt>
+<dd>"new_pet_form_viewed"</dd>
+</dl>
+
+<dl>
+<dt>edit =></dt>
+<dd> "edit_pet_form_viewed", target: @pet</dd>
+</dl>
+
+<dl>
+<dt>create =></dt>
+<dd> when valid => "pet_created", target: @pet, attributes: params[:pet]
+<br />
+  when invalid => "pet_create_failed", errors: @pet.errors, attributes: params[:pet]</dd>
+</dl>
+
+<dl>
+<dt>update =></dt>
+<dd> 
+when valid => "pet_updated", target: @pet, changes: @pet.previous_changes.as_json
+<br />
+  when invalid => "pet_update_failed", target: @pet,
                   errors: @pet.errors.as_json, attributes: params[:pet]
+</dd>
+</dl>
 
-destroy => "pet_destroyed", last_snapshot: @pet.as_json
+<dl>
+<dt>destroy =></dt>
+<dd>"pet_destroyed", last_snapshot: @pet.as_jsont</dd>
+</dl>
+
 
 ##### What for?
 
@@ -139,6 +167,8 @@ If you're obsessive about data like us, you'll have written a '*' subscriber tha
 * bind arbitrary logic anywhere in the codebase (see next example) to that specific request without worrying about the logic being run during the request (all listeners are run in the background by Sidekiq)
 
 For example, in an action mailer.
+
+```ruby
 class MyMailer < ActionMailer::Base
   include Reactor::EventMailer
 
@@ -148,9 +178,11 @@ class MyMailer < ActionMailer::Base
     mail to: @user.email, subject: "Your pet is already hungry!", body: "feed it."
   end
 end
+```
 
 Or in a model, concern, or other business logic file.
 
+```ruby
 class MyClass
   include Reactor::Subscribable
 
@@ -158,6 +190,7 @@ class MyClass
      event.actor.recalculate_expensive_something_for(event.target)
   end
 end
+```
 
 ### Testing
 
