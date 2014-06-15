@@ -96,7 +96,10 @@ for your testing convenience.
 
 ## Open Source by Hired
 
-[Hired](https://hired.com/?utm_source=opensource&utm_medium=reactor&utm_campaign=readme) is a marketplace for top engineering talent to find full-time technology jobs. Talented Ruby developers (like yourself) are in extremely high demand! On Hired, apply once and receive 5 to 15 competing job offers in one week from 800+ technology companies. Average Ruby engineer salaries on Hired are around $120,000 per year!
+[Hired](https://hired.com/?utm_source=opensource&utm_medium=reactor&utm_campaign=readme) wants to make sure every developer in the world has a kick-ass job with an awesome salary and great coworkers. 
+
+Our site allows you to quickly create a profile and then get offers from some of the top companies in the world - with salary and equity disclosed up-front. Average Ruby engineer salaries on Hired are around $120,000 per year, but if you are smart enough to use Reactor you'll probably be able to get more like $150,000 :).
+
 
 <a href="https://hired.com/?utm_source=opensource&utm_medium=reactor&utm_campaign=readme-banner" target="_blank">
 <img src="https://dmrxx81gnj0ct.cloudfront.net/public/hired-banner-light-1-728x90.png" alt="Hired" width="728" height="90" align="center"/>
