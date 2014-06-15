@@ -2,7 +2,7 @@
 
 ### A Sidekiq-backed pub/sub layer for your Rails app.
 
-Warning: this is under active development!
+[![Build Status](https://travis-ci.org/hired/reactor.svg?branch=master)](https://travis-ci.org/hired/reactor)
 
 This gem aims to provide the following tools to augment your ActiveRecord & Sidekiq stack.
 
