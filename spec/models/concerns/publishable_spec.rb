@@ -1,8 +1,5 @@
 require 'spec_helper'
 
-class Pet < ActiveRecord::Base
-end
-
 class Auction < ActiveRecord::Base
   attr_accessor :we_want_it
   belongs_to :pet

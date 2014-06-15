@@ -68,6 +68,132 @@ on_event :any_event, in_memory: true do |event|
 end
 ```
 
+#### ResourceActionable
+
+    Enforce a strict 1:1 match between your event model and database model with this controller mixin.
+
+
+```ruby
+class PetsController < ApplicationController
+  include Reactor::ResourceActionable
+  actionable_resource :@pet
+
+  # GET /pets
+  # GET /pets.json
+  def index
+    @pets = current_user.pets
+
+    respond_to do |format|
+      format.html # index.html.erb
+      format.json { render json: @pets }
+    end
+  end
+
+  def show
+    @pet = current_user.pets.find(params[:id])
+    respond_to do |format|
+      format.html # index.html.erb
+      format.json { render json: @pet }
+    end
+  end
+end
+
+```
+
+Now your index action (and any of the other RESTful actions in that controller) will fire a useful event for you to bind to and log.
+
+*Important* Reactor::ResourceActionable has one major usage constraints:
+
+Your controller *must* have a method called "action_event" with this signature.
+```ruby
+def action_event(name, options = {})
+  # Here's what ours looks like, but yours may look different.
+  actor = options[:actor] || current_user
+  actor.publish(name, options.merge(default_action_parameters))
+  #where default_action_parameters includes things like ip_address, referrer, user_agent
+end
+```
+
+Once you write your own action_event to describe your event data model's base attributes, your ResourceActionable endpoints will now fire events that map like so (for the example above):
+
+<dl>
+<dt>index =></dt>
+<dd>"pets_indexed"</dd>
+</dl>
+ 
+<dl>
+<dt>show =></dt>
+<dd>"pet_viewed", target: @pet</dd>
+</dl>
+
+<dl>
+<dt>new =></dt>
+<dd>"new_pet_form_viewed"</dd>
+</dl>
+
+<dl>
+<dt>edit =></dt>
+<dd> "edit_pet_form_viewed", target: @pet</dd>
+</dl>
+
+<dl>
+<dt>create =></dt>
+<dd> when valid => "pet_created", target: @pet, attributes: params[:pet]
+<br />
+  when invalid => "pet_create_failed", errors: @pet.errors, attributes: params[:pet]</dd>
+</dl>
+
+<dl>
+<dt>update =></dt>
+<dd> 
+when valid => "pet_updated", target: @pet, changes: @pet.previous_changes.as_json
+<br />
+  when invalid => "pet_update_failed", target: @pet,
+                  errors: @pet.errors.as_json, attributes: params[:pet]
+</dd>
+</dl>
+
+<dl>
+<dt>destroy =></dt>
+<dd>"pet_destroyed", last_snapshot: @pet.as_jsont</dd>
+</dl>
+
+
+##### What for?
+
+If you're obsessive about data like us, you'll have written a '*' subscriber that logs every event fired in the system. With information-dense resource information logged for each action a user performs, it will be trivial for a data analyst to determine patterns in user activity. For example, with the above data being logged for the pet resource, we can easily
+* determine which form field validations are constantly being hit by users
+* see if there are any fields that are consistently ignored on that form until later
+* recover data from the last_snapshot of a destroyed record
+* write a small conversion funnel analysis to see who never makes it back to a record to update it
+* bind arbitrary logic anywhere in the codebase (see next example) to that specific request without worrying about the logic being run during the request (all listeners are run in the background by Sidekiq)
+
+For example, in an action mailer.
+
+```ruby
+class MyMailer < ActionMailer::Base
+  include Reactor::EventMailer
+
+  on_event :pet_created do |event|
+    @user = event.actor
+    @pet = event.target
+    mail to: @user.email, subject: "Your pet is already hungry!", body: "feed it."
+  end
+end
+```
+
+Or in a model, concern, or other business logic file.
+
+```ruby
+class MyClass
+  include Reactor::Subscribable
+
+  on_event :pet_updated do |event|
+     event.actor.recalculate_expensive_something_for(event.target)
+  end
+end
+```
+
 ### Testing
 
 Calling `Reactor.test_mode!` enables test mode.  (You should call this as early as possible, before your subscriber classes

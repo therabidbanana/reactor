@@ -3,6 +3,7 @@ require "reactor/models/concerns/publishable"
 require "reactor/models/concerns/subscribable"
 require "reactor/models/concerns/optionally_subclassable"
 require "reactor/models/subscriber"
+require "reactor/controllers/concerns/resource_actionable"
 require "reactor/event"
 
 module Reactor
