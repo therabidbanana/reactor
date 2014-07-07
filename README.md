@@ -220,16 +220,7 @@ for your testing convenience.
 4. Push to the branch (`git push origin my-new-feature`)
 5. Create new Pull Request
 
-## Open Source by Hired
-
-[Hired](https://hired.com/?utm_source=opensource&utm_medium=reactor&utm_campaign=readme) wants to make sure every developer in the world has a kick-ass job with an awesome salary and great coworkers. 
-
-Our site allows you to quickly create a profile and then get offers from some of the top companies in the world - with salary and equity disclosed up-front. Average Ruby engineer salaries on Hired are around $120,000 per year, but if you are smart enough to use Reactor you'll probably be able to get more like $150,000 :).
-
-
-<a href="https://hired.com/?utm_source=opensource&utm_medium=reactor&utm_campaign=readme-banner" target="_blank">
-<img src="https://dmrxx81gnj0ct.cloudfront.net/public/hired-banner-light-1-728x90.png" alt="Hired" width="728" height="90" align="center"/>
-</a>
+## Open Source by [Hired](https://hired.com/?utm_source=opensource&utm_medium=reactor&utm_campaign=readme)
 
 We are Ruby developers ourselves, and we use all of our open source projects in production. We always encourge forks, pull requests, and issues. Get in touch with the Hired Engineering team at _opensource@hired.com_.
 
