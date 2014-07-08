@@ -2,6 +2,8 @@ class Reactor::Event
   include Reactor::OptionallySubclassable
   include Sidekiq::Worker
 
+  class UnserializableModelKeysIncluded < StandardError; end;
+
   attr_accessor :data
 
   def initialize(data = {})
@@ -35,6 +37,8 @@ class Reactor::Event
     end
 
     def publish(name, data = {})
+      enforce_serializable_model_keys!(data)
+
       message = new(data.merge(event: name))
 
       if message.at.nil?
@@ -54,6 +58,22 @@ class Reactor::Event
       return if job.nil?
       job.delete
       publish(name, data.except(:was)) if data[:at].future?
+    end
+
+    private
+
+    def enforce_serializable_model_keys!(event_signature)
+      event_signature = event_signature.stringify_keys
+      serializable_models = event_signature.keys.map(&:to_s).select { |k| k.include?('_id') || k.include?('_type') }
+      .map { |k| k.gsub('_id', '') }
+      .map { |k| k.gsub('_type', '') }
+      .uniq
+
+      serializable_models.each do |model_relation_name|
+        raise UnserializableModelKeysIncluded, "#{model_relation_name}_type is missing corresponding _id key" if event_signature["#{model_relation_name}_id"].blank?
+        raise UnserializableModelKeysIncluded, "#{model_relation_name}_id is missing corresponding _type key" if event_signature["#{model_relation_name}_type"].blank?
+
+      end
     end
   end
 

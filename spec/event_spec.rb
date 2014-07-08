@@ -18,8 +18,20 @@ describe Reactor::Event do
 
   describe 'publish' do
     it 'fires the first perform and sets message event_id' do
-      Reactor::Event.should_receive(:perform_async).with(event_name, 'actor_id' => '1', 'event' => :user_did_this)
-      Reactor::Event.publish(:user_did_this, actor_id: '1')
+      Reactor::Event.should_receive(:perform_async).with(event_name, 'actor_id' => '1', 'actor_type' => 'Pet', 'event' => :user_did_this)
+      Reactor::Event.publish(:user_did_this, actor_id: '1', actor_type: 'Pet')
+    end
+
+    context 'x_id is included but x_type is not' do
+      it 'raises an exception' do
+        expect { Reactor::Event.publish(:user_did_something, actor_id: '1') }.to raise_error
+      end
+    end
+
+    context 'x_type is included but x_id is not' do
+      it 'raises an exception' do
+        expect { Reactor::Event.publish(:user_did_something, actor_type: 'Pet') }.to raise_error
+      end
     end
   end
 
