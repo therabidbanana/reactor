@@ -30,7 +30,7 @@ describe Reactor::ResourceActionable do
 
   describe "when action strategy class exists" do
     it 'runs the strategy of the matching name' do
-      Reactor::ResourceActionable::CreateEvent.should_receive(:perform_on).with(controller_stub)
+      expect(Reactor::ResourceActionable::CreateEvent).to receive(:perform_on).with(controller_stub)
       controller_stub.create
     end
   end
@@ -38,7 +38,7 @@ describe Reactor::ResourceActionable do
   describe "when action is non-standard rails CRUD action" do
     it 'fires a basic action_event' do
       controller_stub.action_name = 'do_thing'
-      controller_stub.should_receive(:action_event).with("cat_do_thing")
+      expect(controller_stub).to receive(:action_event).with("cat_do_thing")
       controller_stub.create
     end
   end
@@ -47,41 +47,41 @@ end
 describe "ActionEvents" do
   let(:actionable_resource) { ArbitraryModel.create! }
   let(:nested_resource) { Pet.create! }
-  let(:ctrl_stub) { stub(resource_name: "cat", actionable_resource: actionable_resource, nested_resource: nested_resource, params: {'cat' => {name: "Sasha"}} ) }
+  let(:ctrl_stub) { double(resource_name: "cat", actionable_resource: actionable_resource, nested_resource: nested_resource, params: {'cat' => {name: "Sasha"}} ) }
 
   describe "ShowEvent" do
     after { Reactor::ResourceActionable::ShowEvent.perform_on(ctrl_stub) }
-    specify { ctrl_stub.should_receive(:action_event).with("cat_viewed", target: actionable_resource) }
+    specify { expect(ctrl_stub).to receive(:action_event).with("cat_viewed", target: actionable_resource) }
   end
 
   describe "EditEvent" do
     after { Reactor::ResourceActionable::EditEvent.perform_on(ctrl_stub) }
-    specify { ctrl_stub.should_receive(:action_event).with("edit_cat_form_viewed", target: actionable_resource) }
+    specify { expect(ctrl_stub).to receive(:action_event).with("edit_cat_form_viewed", target: actionable_resource) }
   end
 
   describe "NewEvent" do
     after { Reactor::ResourceActionable::NewEvent.perform_on(ctrl_stub) }
-    specify { ctrl_stub.should_receive(:action_event).with("new_cat_form_viewed", target: nested_resource) }
+    specify { expect(ctrl_stub).to receive(:action_event).with("new_cat_form_viewed", target: nested_resource) }
   end
 
   describe "IndexEvent" do
     after { Reactor::ResourceActionable::IndexEvent.perform_on(ctrl_stub) }
-    specify { ctrl_stub.should_receive(:action_event).with("cats_indexed", target: nested_resource) }
+    specify { expect(ctrl_stub).to receive(:action_event).with("cats_indexed", target: nested_resource) }
   end
 
   describe "DestroyEvent" do
     after { Reactor::ResourceActionable::DestroyEvent.perform_on(ctrl_stub) }
-    specify { ctrl_stub.should_receive(:action_event).with("cat_destroyed", last_snapshot: actionable_resource.as_json) }
+    specify { expect(ctrl_stub).to receive(:action_event).with("cat_destroyed", last_snapshot: actionable_resource.as_json) }
   end
 
   describe "CreateEvent" do
     after { Reactor::ResourceActionable::CreateEvent.perform_on(ctrl_stub) }
 
     describe "when resource is valid" do
-      before { actionable_resource.should_receive(:valid?).and_return(true) }
+      before { expect(actionable_resource).to receive(:valid?).and_return(true) }
 
       specify do
-        ctrl_stub.should_receive(:action_event)
+        expect(ctrl_stub).to receive(:action_event)
           .with("cat_created",
                 target: actionable_resource,
                 attributes: {name: "Sasha"})
@@ -90,12 +90,12 @@ describe "ActionEvents" do
 
     describe "when resource is not valid" do
       before do
-        actionable_resource.should_receive(:valid?).and_return(false)
-        actionable_resource.should_receive(:errors).and_return('awesomeness' => 'too awesome')
+        expect(actionable_resource).to receive(:valid?).and_return(false)
+        expect(actionable_resource).to receive(:errors).and_return('awesomeness' => 'too awesome')
       end
 
       specify do
-        ctrl_stub.should_receive(:action_event)
+        expect(ctrl_stub).to receive(:action_event)
           .with("cat_create_failed",
                 errors: {'awesomeness' => 'too awesome'},
                 target: nested_resource,
@@ -109,12 +109,12 @@ describe "ActionEvents" do
 
     describe "when resource is valid" do
       before do
-        actionable_resource.should_receive(:valid?).and_return(true)
-        actionable_resource.should_receive(:previous_changes).and_return({'name' => [nil, "Sasha"]})
+        expect(actionable_resource).to receive(:valid?).and_return(true)
+        expect(actionable_resource).to receive(:previous_changes).and_return({'name' => [nil, "Sasha"]})
       end
 
       specify do
-        ctrl_stub.should_receive(:action_event)
+        expect(ctrl_stub).to receive(:action_event)
           .with("cat_updated",
                 target: actionable_resource,
                 changes: {'name' => [nil, "Sasha"]})
@@ -123,12 +123,12 @@ describe "ActionEvents" do
 
     describe "when resource is not valid" do
       before do
-        actionable_resource.should_receive(:valid?).and_return(false)
-        actionable_resource.should_receive(:errors).and_return('awesomeness' => 'too awesome')
+        expect(actionable_resource).to receive(:valid?).and_return(false)
+        expect(actionable_resource).to receive(:errors).and_return('awesomeness' => 'too awesome')
       end
 
       specify do
-        ctrl_stub.should_receive(:action_event)
+        expect(ctrl_stub).to receive(:action_event)
           .with("cat_update_failed",
               target: actionable_resource,
               errors: {'awesomeness' => 'too awesome'},

@@ -35,18 +35,18 @@ describe Reactor::Publishable do
 
     it 'publishes an event with actor_id and actor_type set as self' do
       auction
-      Reactor::Event.should_receive(:publish) do |name, data|
-        name.should == :an_event
-        data[:what].should == 'the'
-        data[:actor].should == auction
+      expect(Reactor::Event).to receive(:publish) do |name, data|
+        expect(name).to eq(:an_event)
+        expect(data[:what]).to eq('the')
+        expect(data[:actor]).to eq(auction)
       end
       auction.publish(:an_event, {what: 'the'})
     end
 
     it 'publishes an event with provided actor and target methods' do
-      Reactor::Event.should_receive(:publish) do |name, data|
-        name.should == :woof
-        data[:actor].should == pet
+      expect(Reactor::Event).to receive(:publish) do |name, data|
+        expect(name).to eq(:woof)
+        expect(data[:actor]).to eq(pet)
       end
       auction
     end
@@ -54,8 +54,8 @@ describe Reactor::Publishable do
     it 'reschedules an event when the :at time changes' do
       start_at = auction.start_at
       new_start_at = start_at + 1.week
-      Reactor::Event.should_receive(:reschedule).with :ring, anything
-      Reactor::Event.should_receive(:reschedule).with :begin,
+      expect(Reactor::Event).to receive(:reschedule).with :ring, anything
+      expect(Reactor::Event).to receive(:reschedule).with :begin,
         hash_including(
           at: new_start_at,
           actor: auction,
@@ -70,8 +70,8 @@ describe Reactor::Publishable do
       ring_time = auction.ring_timeout
       new_start_at = auction.start_at + 1.week
       new_ring_time = new_start_at + 30.seconds
-      Reactor::Event.should_receive(:reschedule).with :begin, anything
-      Reactor::Event.should_receive(:reschedule).with :ring,
+      expect(Reactor::Event).to receive(:reschedule).with :begin, anything
+      expect(Reactor::Event).to receive(:reschedule).with :ring,
         hash_including(
           at: new_ring_time,
           actor: auction,
@@ -84,24 +84,24 @@ describe Reactor::Publishable do
     it 'supports immediate events (on create) that get fired once' do
       TestSubscriber.create! event_name: :bell
       auction
-      TestSubscriber.class_variable_get(:@@called).should be_true
+      expect(TestSubscriber.class_variable_get(:@@called)).to be_truthy
       TestSubscriber.class_variable_set(:@@called, false)
       auction.start_at = 1.day.from_now
       auction.save
-      TestSubscriber.class_variable_get(:@@called).should be_false
+      expect(TestSubscriber.class_variable_get(:@@called)).to be_falsey
     end
 
     it 'does not publish an event scheduled for the past' do
       TestSubscriber.create! event_name: :begin
       auction
-      TestSubscriber.class_variable_get(:@@called).should be_false
+      expect(TestSubscriber.class_variable_get(:@@called)).to be_falsey
     end
 
     it 'does publish an event scheduled for the future' do
       TestSubscriber.create! event_name: :begin
       Auction.create!(pet: pet, start_at: Time.current + 1.week)
 
-      TestSubscriber.class_variable_get(:@@called).should be_true
+      expect(TestSubscriber.class_variable_get(:@@called)).to be_truthy
     end
 
     it 'can fire events onsave for any condition' do
@@ -110,11 +110,11 @@ describe Reactor::Publishable do
       TestSubscriber.class_variable_set(:@@called, false)
       auction.start_at = 1.day.from_now
       auction.save
-      TestSubscriber.class_variable_get(:@@called).should be_false
+      expect(TestSubscriber.class_variable_get(:@@called)).to be_falsey
       auction.start_at = 2.days.from_now
       auction.we_want_it = true
       auction.save
-      TestSubscriber.class_variable_get(:@@called).should be_true
+      expect(TestSubscriber.class_variable_get(:@@called)).to be_truthy
     end
   end
 end
