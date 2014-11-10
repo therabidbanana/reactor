@@ -27,8 +27,6 @@ end
 RSpec.configure do |config|
   # some (optional) config here
 
-  config.treat_symbols_as_metadata_keys_with_true_values = true
-
   # Runs Sidekiq jobs inline by default unless the RSpec metadata :sidekiq is specified,
   # in which case it will use the real Redis-backed Sidekiq queue
   config.before(:each, :sidekiq) do
@@ -36,9 +34,7 @@ RSpec.configure do |config|
     Sidekiq::Testing.disable!
   end
 
-
   config.after(:each, :sidekiq) do
     Sidekiq::Testing.inline!
   end
-
 end

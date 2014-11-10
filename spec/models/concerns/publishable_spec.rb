@@ -35,33 +35,28 @@ describe Reactor::Publishable do
 
     it 'publishes an event with actor_id and actor_type set as self' do
       auction
-      expect(Reactor::Event).to receive(:publish) do |name, data|
-        expect(name).to eq(:an_event)
-        expect(data[:what]).to eq('the')
-        expect(data[:actor]).to eq(auction)
-      end
+      expect(Reactor::Event).to receive(:publish).with(:an_event, what: 'the', actor: auction)
       auction.publish(:an_event, {what: 'the'})
     end
 
     it 'publishes an event with provided actor and target methods' do
-      expect(Reactor::Event).to receive(:publish) do |name, data|
-        expect(name).to eq(:woof)
-        expect(data[:actor]).to eq(pet)
-      end
+      allow(Reactor::Event).to receive(:publish).exactly(5).times
       auction
+      expect(Reactor::Event).to have_received(:publish).with(:woof, a_hash_including(actor: pet, target: auction))
     end
 
     it 'reschedules an event when the :at time changes' do
       start_at = auction.start_at
       new_start_at = start_at + 1.week
       expect(Reactor::Event).to receive(:reschedule).with :ring, anything
-      expect(Reactor::Event).to receive(:reschedule).with :begin,
-        hash_including(
+      expect(Reactor::Event).to receive(:reschedule).with(:begin,
+        a_hash_including(
           at: new_start_at,
           actor: auction,
           was: start_at,
           additional_info: 'curtis was here'
         )
+      )
       auction.start_at = new_start_at
       auction.save!
     end
@@ -71,12 +66,13 @@ describe Reactor::Publishable do
       new_start_at = auction.start_at + 1.week
       new_ring_time = new_start_at + 30.seconds
       expect(Reactor::Event).to receive(:reschedule).with :begin, anything
-      expect(Reactor::Event).to receive(:reschedule).with :ring,
-        hash_including(
+      expect(Reactor::Event).to receive(:reschedule).with(:ring,
+        a_hash_including(
           at: new_ring_time,
           actor: auction,
           was: ring_time
         )
+      )
       auction.start_at = new_start_at
       auction.save!
     end
