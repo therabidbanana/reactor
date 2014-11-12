@@ -1,7 +1,9 @@
 RSpec::Matchers.define :publish_event do |name, data = {}|
+  supports_block_expectations
+
   match do |block|
     defaults = {:actor => anything}
-    Reactor::Event.should_receive(:publish).with(name, hash_including(defaults.merge(data)))
+    expect(Reactor::Event).to receive(:publish).with(name, hash_including(defaults.merge(data)))
 
     begin
       block.call
@@ -14,14 +16,16 @@ RSpec::Matchers.define :publish_event do |name, data = {}|
 end
 
 RSpec::Matchers.define :publish_events do |*events|
+  supports_block_expectations
+
   match do |block|
-    Reactor::Event.should_receive(:publish).exactly(events.count).times.with do |event, data|
+    expect(Reactor::Event).to receive(:publish).exactly(events.count).times do |event, data|
       match = events.select { |e| (e.is_a?(Hash) ? e.keys.first : e) == event }.first
-      match.should be_present
+      expect(match).to be_present
 
       expected = match.is_a?(Hash) ? match.values.first : {match => {}}
       expected.each do |key, value|
-        value.should == expected[key]
+        expect(value).to eq(expected[key])
       end
     end
 
@@ -36,6 +40,8 @@ RSpec::Matchers.define :publish_events do |*events|
 end
 
 RSpec::Matchers.define :subscribe_to do |name, data = {}, &expectations|
+  supports_block_expectations
+
   match do
     expectations.call if expectations.present?
     Reactor::Event.publish(name, data)

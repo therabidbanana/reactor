@@ -12,9 +12,9 @@ describe Reactor do
 
   describe '.test_mode!' do
     it 'sets Reactor into test mode' do
-      Reactor.test_mode?.should be_false
+      expect(Reactor.test_mode?).to be_falsey
       Reactor.test_mode!
-      Reactor.test_mode?.should be_true
+      expect(Reactor.test_mode?).to be_truthy
     end
   end
 
@@ -23,13 +23,13 @@ describe Reactor do
     after  { Reactor.disable_test_mode! }
 
     it 'subscribers created in test mode are disabled' do
-      subscriber.should_not_receive :spy_on_me
+      expect(subscriber).not_to receive :spy_on_me
       Reactor::Event.publish :test_event
     end
 
     describe '.with_subscriber_enabled' do
       it 'enables a subscriber during test mode' do
-        subscriber.should_receive :spy_on_me
+        expect(subscriber).to receive :spy_on_me
         Reactor.with_subscriber_enabled(subscriber) do
           Reactor::Event.publish :test_event
         end

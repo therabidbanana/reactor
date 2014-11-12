@@ -33,7 +33,7 @@ describe Reactor::Subscribable do
 
   describe 'on_event' do
     it 'binds block of code statically to event being fired' do
-      Auction.any_instance.should_receive(:update_column).with(:status, 'first_bid_made')
+      expect_any_instance_of(Auction).to receive(:update_column).with(:status, 'first_bid_made')
       Reactor::Event.publish(:bid_made, target: Auction.create)
     end
 
@@ -46,49 +46,49 @@ describe Reactor::Subscribable do
 
     describe 'binding symbol of class method' do
       it 'fires on event' do
-        Auction.should_receive(:ring_bell)
+        expect(Auction).to receive(:ring_bell)
         Reactor::Event.publish(:puppy_delivered)
       end
 
       it 'can be delayed' do
-        Auction.should_receive(:pick_up_poop)
-        Auction.should_receive(:delay_for).with(5.minutes).and_return(Auction)
+        expect(Auction).to receive(:pick_up_poop)
+        expect(Auction).to receive(:delay_for).with(5.minutes).and_return(Auction)
         Reactor::Event.perform('pooped', {})
       end
     end
 
     it 'binds proc' do
-      Auction.should_receive(:puppies!)
+      expect(Auction).to receive(:puppies!)
       Reactor::Event.publish(:any_event)
     end
 
     it 'accepts wildcard event name' do
-      Auction.any_instance.should_receive(:more_puppies!)
+      expect_any_instance_of(Auction).to receive(:more_puppies!)
       Reactor::Event.publish(:another_event, actor: Auction.create)
     end
 
     describe 'in_memory flag' do
       it 'doesnt fire perform_async when true' do
-        Auction.should_receive(:puppies!)
-        Reactor::StaticSubscribers::CatDeliveredHandler0.should_not_receive(:perform_async)
+        expect(Auction).to receive(:puppies!)
+        expect(Reactor::StaticSubscribers::CatDeliveredHandler0).not_to receive(:perform_async)
         Reactor::Event.publish(:cat_delivered)
       end
 
       it 'fires perform_async when falsey' do
-        Reactor::StaticSubscribers::WildcardHandler0.should_receive(:perform_async)
+        expect(Reactor::StaticSubscribers::WildcardHandler0).to receive(:perform_async)
         Reactor::Event.publish(:puppy_delivered)
       end
     end
 
     describe '#perform' do
       it 'returns :__perform_aborted__ when Reactor is in test mode' do
-        Reactor::StaticSubscribers::TestPuppyDeliveredHandler0.new.perform({}).should == :__perform_aborted__
+        expect(Reactor::StaticSubscribers::TestPuppyDeliveredHandler0.new.perform({})).to eq(:__perform_aborted__)
         Reactor::Event.publish(:test_puppy_delivered)
       end
 
       it 'performs normally when specifically enabled' do
         Reactor.enable_test_mode_subscriber(TestModeAuction)
-        Reactor::StaticSubscribers::TestPuppyDeliveredHandler0.new.perform({}).should_not == :__perform_aborted__
+        expect(Reactor::StaticSubscribers::TestPuppyDeliveredHandler0.new.perform({})).not_to eq(:__perform_aborted__)
         Reactor::Event.publish(:test_puppy_delivered)
       end
     end

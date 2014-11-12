@@ -13,11 +13,21 @@ describe Reactor::Subscriber do
   describe 'fire' do
     subject { MySubscriber.create(event_name: :you_name_it).fire some: 'random', event: 'data' }
 
-    its(:event) { should be_a Reactor::Event }
-    its('event.some') { should == 'random' }
+    describe '#event' do
+      subject { super().event }
+      it { is_expected.to be_a Reactor::Event }
+    end
+
+    describe '#event' do
+      subject { super().event }
+      describe '#some' do
+        subject { super().some }
+        it { is_expected.to eq('random') }
+      end
+    end
 
     it 'executes block given' do
-      subject.was_called.should be_true
+      expect(subject.was_called).to be_truthy
     end
   end
 
@@ -25,7 +35,7 @@ describe Reactor::Subscriber do
   describe 'matcher' do
     it 'can be set to star to bind to all events' do
       MySubscriber.create!(event_name: '*')
-      MySubscriber.any_instance.should_receive(:fire).with(hash_including('random' => 'data', 'event' => 'this_event'))
+      expect_any_instance_of(MySubscriber).to receive(:fire).with(hash_including('random' => 'data', 'event' => 'this_event'))
       Reactor::Event.publish(:this_event, {random: 'data'})
     end
   end

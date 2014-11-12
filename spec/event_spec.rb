@@ -18,7 +18,7 @@ describe Reactor::Event do
 
   describe 'publish' do
     it 'fires the first perform and sets message event_id' do
-      Reactor::Event.should_receive(:perform_async).with(event_name, 'actor_id' => '1', 'actor_type' => 'Pet', 'event' => :user_did_this)
+      expect(Reactor::Event).to receive(:perform_async).with(event_name, 'actor_id' => '1', 'actor_type' => 'Pet', 'event' => :user_did_this)
       Reactor::Event.publish(:user_did_this, actor_id: '1', actor_type: 'Pet')
     end
 
@@ -39,22 +39,22 @@ describe Reactor::Event do
     before { Reactor::Subscriber.create(event_name: :user_did_this) }
     after { Reactor::Subscriber.destroy_all }
     it 'fires all subscribers' do
-      Reactor::Subscriber.any_instance.should_receive(:fire).with(hash_including(actor_id: '1'))
+      expect_any_instance_of(Reactor::Subscriber).to receive(:fire).with(hash_including(actor_id: '1'))
       Reactor::Event.perform(event_name, actor_id: '1')
     end
 
     it 'sets a fired_at key in event data' do
-      Reactor::Subscriber.any_instance.should_receive(:fire).with(hash_including(fired_at: anything))
+      expect_any_instance_of(Reactor::Subscriber).to receive(:fire).with(hash_including(fired_at: anything))
       Reactor::Event.perform(event_name, actor_id: '1')
     end
 
     it 'works with the legacy .process method, too' do
-      Reactor::Subscriber.any_instance.should_receive(:fire).with(hash_including(actor_id: '1'))
+      expect_any_instance_of(Reactor::Subscriber).to receive(:fire).with(hash_including(actor_id: '1'))
       Reactor::Event.perform(event_name, actor_id: '1')
     end
 
     describe 'when subscriber throws exception', :sidekiq do
-      let(:mock) { mock(:thing, some_method: 3) }
+      let(:mock) { double(:thing, some_method: 3) }
       let(:barfing_event) { Reactor::Event.perform('barfed', somethin: 'up') }
 
       before do
@@ -63,7 +63,7 @@ describe Reactor::Event do
           raise 'UNEXPECTED!'
         end
         Reactor::SUBSCRIBERS['barfed'] << Reactor::Subscribable::StaticSubscriberFactory.create('barfed') do |event|
-          mock.some_method
+          double.some_method
         end
       end
 
@@ -80,12 +80,12 @@ describe Reactor::Event do
     it 'can schedule and reschedule an event in the future' do
       expect {
         jid = Reactor::Event.publish :turtle_time, at: time
-        scheduled.find_job(jid).score.should == time.to_f
+        expect(scheduled.find_job(jid).score).to eq(time.to_f)
       }.to change { scheduled.size }.by(1)
 
       expect {
         jid = Reactor::Event.reschedule :turtle_time, at: (time + 2.hours), was: time
-        scheduled.find_job(jid).score.should == (time + 2.hours).to_f
+        expect(scheduled.find_job(jid).score).to eq((time + 2.hours).to_f)
       }.to_not change { scheduled.size }
     end
   end
@@ -101,19 +101,32 @@ describe Reactor::Event do
 
       describe 'getters' do
         context 'basic key value' do
-          its(:random) { should == 'data' }
+          describe '#random' do
+            subject { super().random }
+            it { is_expected.to eq('data') }
+          end
         end
 
         context 'foreign key and foreign type' do
-          its(:pet) { should be_a MyModule::Cat }
-          its('pet.id') { should == MyModule::Cat.last.id }
+          describe '#pet' do
+            subject { super().pet }
+            it { is_expected.to be_a MyModule::Cat }
+          end
+
+          describe '#pet' do
+            subject { super().pet }
+            describe '#id' do
+              subject { super().id }
+              it { is_expected.to eq(MyModule::Cat.last.id) }
+            end
+          end
         end
       end
 
       describe 'setters' do
         it 'sets simple keys' do
           event.simple = 'key'
-          event.data[:simple].should == 'key'
+          expect(event.data[:simple]).to eq('key')
         end
 
         it 'sets active_record polymorphic keys' do
@@ -126,14 +139,14 @@ describe Reactor::Event do
 
     describe 'data' do
       let(:serialized_event) { event.data }
-      specify { serialized_event.should be_a Hash }
-      specify { serialized_event[:random].should == 'data' }
+      specify { expect(serialized_event).to be_a Hash }
+      specify { expect(serialized_event[:random]).to eq('data') }
     end
 
     describe 'new' do
-      specify { event.should be_a Reactor::Event }
-      specify { event.pet_id.should == cat.id }
-      specify { event.arbitrary_model_id.should == arbitrary_model.id }
+      specify { expect(event).to be_a Reactor::Event }
+      specify { expect(event.pet_id).to eq(cat.id) }
+      specify { expect(event.arbitrary_model_id).to eq(arbitrary_model.id) }
     end
   end
 end
