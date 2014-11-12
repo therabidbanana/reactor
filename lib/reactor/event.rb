@@ -64,9 +64,9 @@ class Reactor::Event
 
     def enforce_serializable_model_keys!(event_signature)
       event_signature = event_signature.stringify_keys
-      serializable_models = event_signature.keys.map(&:to_s).select { |k| k.include?('_id') || k.include?('_type') }
-      .map { |k| k.gsub('_id', '') }
-      .map { |k| k.gsub('_type', '') }
+      serializable_models = event_signature.keys.map(&:to_s).select { |k| k.end_with?('_id') || k.end_with?('_type') }
+      .map { |k| k.gsub(/_id\Z/, '') }
+      .map { |k| k.gsub(/_type\Z/, '') }
       .uniq
 
       serializable_models.each do |model_relation_name|
