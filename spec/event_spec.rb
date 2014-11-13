@@ -18,7 +18,7 @@ describe Reactor::Event do
 
   describe 'publish' do
     it 'fires the first perform and sets message event_id' do
-      Reactor::Event.should_receive(:perform_async).with(event_name, 'actor_id' => '1', 'event' => :user_did_this)
+      expect(Reactor::Event).to receive(:perform_async).with(event_name, 'actor_id' => '1', 'event' => :user_did_this)
       Reactor::Event.publish(:user_did_this, actor_id: '1')
     end
   end
@@ -51,7 +51,7 @@ describe Reactor::Event do
           raise 'UNEXPECTED!'
         end
         Reactor::SUBSCRIBERS['barfed'] << Reactor::Subscribable::StaticSubscriberFactory.create('barfed') do |event|
-          double.some_method
+          mock.some_method
         end
       end
 

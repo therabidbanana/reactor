@@ -3,38 +3,29 @@ RSpec::Matchers.define :publish_event do |name, data = {}|
 
   match do |block|
     defaults = {:actor => anything}
-    expect(Reactor::Event).to receive(:publish).with(name, hash_including(defaults.merge(data)))
 
-    begin
-      block.call
-      RSpec::Mocks::verify
-      true
-    rescue RSpec::Mocks::MockExpectationError => e
-      false
-    end
+    allow(Reactor::Event).to receive(:publish).with(name, a_hash_including(defaults.merge(data)))
+
+    block.call
+
+    expect(Reactor::Event).to have_received(:publish).with(name, a_hash_including(defaults.merge(data)))
   end
 end
 
-RSpec::Matchers.define :publish_events do |*events|
+RSpec::Matchers.define :publish_events do |*names|
   supports_block_expectations
 
   match do |block|
-    expect(Reactor::Event).to receive(:publish).exactly(events.count).times do |event, data|
-      match = events.select { |e| (e.is_a?(Hash) ? e.keys.first : e) == event }.first
-      expect(match).to be_present
+    defaults = {:actor => anything}
 
-      expected = match.is_a?(Hash) ? match.values.first : {match => {}}
-      expected.each do |key, value|
-        expect(value).to eq(expected[key])
-      end
+    names.each do |name|
+      allow(Reactor::Event).to receive(:publish).with(name, a_hash_including(defaults))
     end
 
-    begin
-      block.call
-      RSpec::Mocks::verify
-      true
-    rescue RSpec::Mocks::MockExpectationError => e
-      false
+    block.call
+
+    names.each do |name|
+      expect(Reactor::Event).to have_received(:publish).with(name, a_hash_including(defaults))
     end
   end
 end
