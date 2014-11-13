@@ -30,6 +30,7 @@ end
 
 describe Reactor::Subscribable do
   let(:scheduled) { Sidekiq::ScheduledSet.new }
+  before { Reactor::TEST_MODE_SUBSCRIBERS.clear }
 
   describe 'on_event' do
     it 'binds block of code statically to event being fired' do

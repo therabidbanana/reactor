@@ -28,7 +28,11 @@ class TestSubscriber < Reactor::Subscriber
 end
 
 describe Reactor::Publishable do
-  before { TestSubscriber.destroy_all }
+  before do
+    TestSubscriber.destroy_all
+    TestSubscriber.class_variable_set(:@@called, false)
+  end
+
   describe 'publish' do
     let(:pet) { Pet.create! }
     let(:auction) { Auction.create!(pet: pet, start_at: DateTime.new(2012,12,21)) }
