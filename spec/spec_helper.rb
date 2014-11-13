@@ -9,6 +9,8 @@ require 'sidekiq/api'
 require 'reactor'
 require 'reactor/testing/matchers'
 
+require 'rspec/its'
+
 Sidekiq.configure_server do |config|
   config.redis = { url: ENV["REDISTOGO_URL"] }
 

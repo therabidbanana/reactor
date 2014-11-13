@@ -13,18 +13,8 @@ describe Reactor::Subscriber do
   describe 'fire' do
     subject { MySubscriber.create(event_name: :you_name_it).fire some: 'random', event: 'data' }
 
-    describe '#event' do
-      subject { super().event }
-      it { is_expected.to be_a Reactor::Event }
-    end
-
-    describe '#event' do
-      subject { super().event }
-      describe '#some' do
-        subject { super().some }
-        it { is_expected.to eq('random') }
-      end
-    end
+    its(:event) { is_expected.to be_a Reactor::Event }
+    its('event.some') { is_expected.to eq('random') }
 
     it 'executes block given' do
       expect(subject.was_called).to be_truthy
