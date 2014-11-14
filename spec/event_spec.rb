@@ -89,25 +89,12 @@ describe Reactor::Event do
 
       describe 'getters' do
         context 'basic key value' do
-          describe '#random' do
-            subject { super().random }
-            it { is_expected.to eq('data') }
-          end
+          its(:random) { is_expected.to eq('data') }
         end
 
         context 'foreign key and foreign type' do
-          describe '#pet' do
-            subject { super().pet }
-            it { is_expected.to be_a MyModule::Cat }
-          end
-
-          describe '#pet' do
-            subject { super().pet }
-            describe '#id' do
-              subject { super().id }
-              it { is_expected.to eq(MyModule::Cat.last.id) }
-            end
-          end
+          its(:pet) { is_expected.to be_a MyModule::Cat }
+          its('pet.id') { is_expected.to eq(MyModule::Cat.last.id) }
         end
       end
 
