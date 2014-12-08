@@ -4,11 +4,11 @@ RSpec::Matchers.define :publish_event do |name, data = {}|
   match do |block|
     defaults = {:actor => anything}
 
-    allow(Reactor::Event).to receive(:publish).with(name, a_hash_including(defaults.merge(data)))
+    allow(Reactor::Event).to receive(:publish)
 
     block.call
 
-    expect(Reactor::Event).to have_received(:publish).with(name, a_hash_including(defaults.merge(data)))
+    expect(Reactor::Event).to have_received(:publish).with(name, a_hash_including(defaults.merge(data))).at_least(:once)
   end
 end
 
@@ -18,14 +18,12 @@ RSpec::Matchers.define :publish_events do |*names|
   match do |block|
     defaults = {:actor => anything}
 
-    names.each do |name|
-      allow(Reactor::Event).to receive(:publish).with(name, a_hash_including(defaults))
-    end
+    allow(Reactor::Event).to receive(:publish)
 
     block.call
 
     names.each do |name|
-      expect(Reactor::Event).to have_received(:publish).with(name, a_hash_including(defaults))
+      expect(Reactor::Event).to have_received(:publish).with(name, a_hash_including(defaults)).at_least(:once)
     end
   end
 end

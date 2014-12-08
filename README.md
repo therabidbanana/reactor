@@ -45,7 +45,29 @@ Reactor::Event.publish(:event_name, any: 'data', you: 'want')
 
 ```ruby
 publishes :my_model_created
-publishes :state_has_changed, if: -> { state_has_changed? }
+```
+
+  Schedule an event to get published at a specific time. Note: if timestamp is a property on an ActiveRecord::Model
+  then updating that property will re-schedule the firing of the event
+
+```ruby
+publishes :something_happened, at: :timestamp
+```
+
+  Schedule an event to get published at a specific time using a method to generate the timestamp and following some other property. In this case the :something_happened event will be fired 72 hours after your model is created. The event will be re-scheduled if created_at is changed.
+
+```ruby
+def reminder_email_time
+  created_at + 72.hours
+end
+
+publishes :reminder_sent, at: :reminder_email_time, watch: :created_at
+```
+
+  Scheduled events can check conditionally fire -- eg: in 2 days fire reminder_email if the user hasn't already responded.
+
+```ruby
+publishes :reminder_sent, at: :reminder_email_time, if: -> { user.responded == false }
 ```
 
 #### Subscribable

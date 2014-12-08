@@ -3,8 +3,6 @@ module Reactor::Publishable
 
   included do
     after_commit :schedule_events, if: :persisted?, on: :create
-    after_commit :schedule_conditional_events_on_create, if: :persisted?, on: :create
-    after_commit :schedule_conditional_events_on_update, if: :persisted?, on: :update
     after_commit :reschedule_events, if: :persisted?, on: :update
   end
 
@@ -45,21 +43,6 @@ module Reactor::Publishable
     end
   end
 
-  def schedule_conditional_events
-    self.class.events.select { |k,v| v.has_key?(:if) }.each do |name, data|
-      event = event_data_for_signature(data)
-      need_to_fire = case (ifarg = data[:if])
-                       when Proc
-                         instance_exec(&ifarg)
-                       when Symbol
-                         send(ifarg)
-                     end
-      Reactor::Event.publish name, event if need_to_fire
-    end
-  end
-  alias :schedule_conditional_events_on_create :schedule_conditional_events
-  alias :schedule_conditional_events_on_update :schedule_conditional_events
-
   def event_data_for_signature(signature)
     signature.merge(
         actor: (signature[:actor] ? send(signature[:actor]) : self),
@@ -67,5 +50,4 @@ module Reactor::Publishable
         at: (signature[:at] ? send(signature[:at]) : nil)
     ).except(:watch, :if)
   end
-
 end

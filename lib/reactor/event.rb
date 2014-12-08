@@ -12,9 +12,28 @@ class Reactor::Event
   end
 
   def perform(name, data)
-    data.merge!(fired_at: Time.current, name: name)
-    fire_database_driven_subscribers(data, name)
-    fire_block_subscribers(data, name)
+    data = data.with_indifferent_access
+
+    if data['actor_type']
+      actor = data["actor_type"].constantize.find(data["actor_id"])
+      publishable_event = actor.class.events[name.to_sym]
+      ifarg = publishable_event[:if] if publishable_event
+    end
+
+    need_to_fire =  case ifarg
+                    when Proc
+                      actor.instance_exec(&ifarg)
+                    when Symbol
+                      actor.send(ifarg)
+                    when NilClass
+                      true
+                    end
+
+    if need_to_fire
+      data.merge!(fired_at: Time.current, name: name)
+      fire_database_driven_subscribers(data, name)
+      fire_block_subscribers(data, name)
+    end
   end
 
   def method_missing(method, *args)
@@ -37,10 +56,10 @@ class Reactor::Event
     def publish(name, data = {})
       message = new(data.merge(event: name))
 
-      if message.at.nil?
-        perform_async name, message.data
-      elsif message.at.future?
+      if message.at
         perform_at message.at, name, message.data
+      else
+        perform_async name, message.data
       end
     end
 
@@ -53,7 +72,8 @@ class Reactor::Event
       end
       return if job.nil?
       job.delete
-      publish(name, data.except(:was)) if data[:at].future?
+
+      publish(name, data.except([:was, :if])) if data[:at].future?
     end
   end
 
