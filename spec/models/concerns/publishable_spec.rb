@@ -108,8 +108,7 @@ describe Reactor::Publishable do
         auction.start_at = 3.day.from_now
         auction.save!
 
-
-        expect{ Reactor::Event.perform(@job_args[0], @job_args[1]) }.to change{ Sidekiq::Extensions::DelayedClass.jobs.size }.by(1)
+        expect{ Reactor::Event.perform(@job_args[0], @job_args[1]) }.to change{ Sidekiq::Extensions::DelayedClass.jobs.size }
       end
 
       it 'does not call the subscriber when if is set to false' do

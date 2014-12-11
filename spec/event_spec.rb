@@ -66,6 +66,10 @@ describe Reactor::Event do
     let(:scheduled) { Sidekiq::ScheduledSet.new }
     let(:time) { 1.hour.from_now }
 
+    before do
+      Sidekiq::Worker.clear_all
+    end
+
     it 'can schedule and reschedule an event in the future' do
       expect {
         jid = Reactor::Event.publish :turtle_time, at: time
@@ -76,6 +80,13 @@ describe Reactor::Event do
         jid = Reactor::Event.reschedule :turtle_time, at: (time + 2.hours), was: time
         expect(scheduled.find_job(jid).score).to eq((time + 2.hours).to_f)
       }.to_not change { scheduled.size }
+    end
+
+    it 'will schedule an event in the future even if that event was not previously scheduled in the past' do
+      expect {
+        jid = Reactor::Event.reschedule :no_old_turtule_time, at: (time + 2.hours), was: time
+        expect(scheduled.find_job(jid).score).to eq((time + 2.hours).to_f)
+      }.to change{ scheduled.size }.by(1)
     end
   end
 
