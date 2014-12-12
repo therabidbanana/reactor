@@ -14,6 +14,7 @@ end
 
 describe Reactor::Event do
 
+  let(:model) { ArbitraryModel.create! }
   let(:event_name) { :user_did_this }
 
   describe 'publish' do
@@ -27,23 +28,23 @@ describe Reactor::Event do
     before { Reactor::Subscriber.create(event_name: :user_did_this) }
     after { Reactor::Subscriber.destroy_all }
     it 'fires all subscribers' do
-      expect_any_instance_of(Reactor::Subscriber).to receive(:fire).with(hash_including(actor_id: '1'))
-      Reactor::Event.perform(event_name, actor_id: '1')
+      expect_any_instance_of(Reactor::Subscriber).to receive(:fire).with(hash_including(actor_id: model.id.to_s))
+      Reactor::Event.perform(event_name, actor_id: model.id.to_s, actor_type: model.class.to_s)
     end
 
     it 'sets a fired_at key in event data' do
       expect_any_instance_of(Reactor::Subscriber).to receive(:fire).with(hash_including(fired_at: anything))
-      Reactor::Event.perform(event_name, actor_id: '1')
+      Reactor::Event.perform(event_name, actor_id: model.id.to_s, actor_type: model.class.to_s)
     end
 
     it 'works with the legacy .process method, too' do
-      expect_any_instance_of(Reactor::Subscriber).to receive(:fire).with(hash_including(actor_id: '1'))
-      Reactor::Event.perform(event_name, actor_id: '1')
+      expect_any_instance_of(Reactor::Subscriber).to receive(:fire).with(hash_including(actor_id: model.id.to_s))
+      Reactor::Event.perform(event_name, actor_id: model.id.to_s, actor_type: model.class.to_s)
     end
 
     describe 'when subscriber throws exception', :sidekiq do
       let(:mock) { double(:thing, some_method: 3) }
-      let(:barfing_event) { Reactor::Event.perform('barfed', somethin: 'up') }
+      let(:barfing_event) { Reactor::Event.perform('barfed', somethin: 'up', actor_id: model.id.to_s, actor_type: model.class.to_s) }
 
       before do
         Reactor::SUBSCRIBERS['barfed'] ||= []
@@ -65,6 +66,10 @@ describe Reactor::Event do
     let(:scheduled) { Sidekiq::ScheduledSet.new }
     let(:time) { 1.hour.from_now }
 
+    before do
+      Sidekiq::Worker.clear_all
+    end
+
     it 'can schedule and reschedule an event in the future' do
       expect {
         jid = Reactor::Event.publish :turtle_time, at: time
@@ -75,6 +80,13 @@ describe Reactor::Event do
         jid = Reactor::Event.reschedule :turtle_time, at: (time + 2.hours), was: time
         expect(scheduled.find_job(jid).score).to eq((time + 2.hours).to_f)
       }.to_not change { scheduled.size }
+    end
+
+    it 'will schedule an event in the future even if that event was not previously scheduled in the past' do
+      expect {
+        jid = Reactor::Event.reschedule :no_old_turtule_time, at: (time + 2.hours), was: time
+        expect(scheduled.find_job(jid).score).to eq((time + 2.hours).to_f)
+      }.to change{ scheduled.size }.by(1)
     end
   end
 
