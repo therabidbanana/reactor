@@ -3,7 +3,7 @@ module Reactor::Publishable
 
   included do
     after_commit :schedule_events, if: :persisted?, on: :create
-    after_commit :reschedule_events, if: :persisted?, on: :update
+    after_commit :reschedule_events_on_update, if: :persisted?, on: :update
   end
 
   def publish(name, data = {})
@@ -12,15 +12,7 @@ module Reactor::Publishable
 
   def reschedule_events
     self.class.events.each do |name, data|
-      attr_changed_method = data[:watch] || data[:at]
-      if data[:at] && previous_changes[attr_changed_method]
-        Reactor::Event.reschedule name,
-          data.merge(
-              at: send(data[:at]),
-              actor: ( data[:actor] ? send(data[:actor]) : self ),
-              target: ( data[:target] ? self : nil),
-              was: previous_changes[data[:at]].try(:first) || send("#{data[:at]}_was"))
-      end
+      reschedule(name, data)
     end
   end
 
@@ -35,6 +27,26 @@ module Reactor::Publishable
   end
 
   private
+
+  def reschedule_events_on_update
+    self.class.events.each do |name, data|
+      attr_changed_method = data[:watch] || data[:at]
+      if previous_changes[attr_changed_method]
+        reschedule(name, data)
+      end
+    end
+  end
+
+  def reschedule(name, data)
+    if data[:at]
+      Reactor::Event.reschedule name,
+        data.merge(
+            at: send(data[:at]),
+            actor: ( data[:actor] ? send(data[:actor]) : self ),
+            target: ( data[:target] ? self : nil),
+            was: previous_changes[data[:at]].try(:first) || send("#{data[:at]}_was"))
+    end
+  end
 
   def schedule_events
     self.class.events.each do |name, data|
