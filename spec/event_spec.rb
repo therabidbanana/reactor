@@ -88,6 +88,12 @@ describe Reactor::Event do
         expect(scheduled.find_job(jid).score).to eq((time + 2.hours).to_f)
       }.to change{ scheduled.size }.by(1)
     end
+
+    it 'will not schedule an event when the time passed in is nil' do
+      expect {
+        Reactor::Event.reschedule :no_old_turtule_time, at: nil, was: time
+      }.to_not change{ scheduled.size }
+    end
   end
 
   describe 'event content' do

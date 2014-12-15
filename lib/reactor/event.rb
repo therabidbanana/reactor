@@ -73,7 +73,7 @@ class Reactor::Event
 
       job.delete if job
 
-      publish(name, data.except([:was, :if])) if data[:at].future?
+      publish(name, data.except([:was, :if])) if data[:at].try(:future?)
     end
   end
 
