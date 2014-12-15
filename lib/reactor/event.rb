@@ -15,7 +15,7 @@ class Reactor::Event
     data = data.with_indifferent_access
 
     if data['actor_type']
-      actor = data["actor_type"].constantize.find(data["actor_id"])
+      actor = data["actor_type"].constantize.unscoped.find(data["actor_id"])
       publishable_event = actor.class.events[name.to_sym]
       ifarg = publishable_event[:if] if publishable_event
     end
