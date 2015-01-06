@@ -71,8 +71,14 @@ class Reactor::Event
         same_at = job.score.to_i == data[:was].to_i
 
         if data[:actor]
-          jd = job['args'].second
-          same_actor = jd['actor_type'] == data[:actor].class.name && jd['actor_id'] == data[:actor].id
+          job_data = job['args'].second
+
+          if job_data
+            same_actor =  job_data['actor_type'] == data[:actor].class.name &&
+                          job_data['actor_id'] == data[:actor].id
+          else
+            same_actor = false
+          end
 
           same_class && same_name && same_at && same_actor
         else
