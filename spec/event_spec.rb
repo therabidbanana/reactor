@@ -84,15 +84,35 @@ describe Reactor::Event do
 
     it 'will schedule an event in the future even if that event was not previously scheduled in the past' do
       expect {
-        jid = Reactor::Event.reschedule :no_old_turtule_time, at: (time + 2.hours), was: time
+        jid = Reactor::Event.reschedule :no_old_turtle_time, at: (time + 2.hours), was: time
         expect(scheduled.find_job(jid).score).to eq((time + 2.hours).to_f)
       }.to change{ scheduled.size }.by(1)
     end
 
     it 'will not schedule an event when the time passed in is nil' do
       expect {
-        Reactor::Event.reschedule :no_old_turtule_time, at: nil, was: time
+        Reactor::Event.reschedule :no_old_turtle_time, at: nil, was: time
       }.to_not change{ scheduled.size }
+    end
+
+    context 'when an actor is passed' do
+      let(:actor) { ArbitraryModel.create! }
+
+      it 'will not delete a job which is not associated with the actor' do
+        Reactor::Event.publish :turtle_time, at: time
+
+        expect {
+          Reactor::Event.reschedule :turtle_time, at: time + 2.hours, was: time, actor: actor
+        }.to change { scheduled.size}.from(1).to(2)
+      end
+
+      it 'will delete a job associated with the actor' do
+        Reactor::Event.publish :turtle_time, at: time, actor: actor
+
+        expect {
+          Reactor::Event.reschedule :turtle_time, at: time + 2.hours, was: time, actor: actor
+        }.not_to change { scheduled.size}.from(1)
+      end
     end
   end
 
