@@ -11,6 +11,9 @@ end
 class ArbitraryModel < ActiveRecord::Base
 end
 
+class OtherWorker
+  include Sidekiq::Worker
+end
 
 describe Reactor::Event do
 
@@ -112,6 +115,14 @@ describe Reactor::Event do
         expect {
           Reactor::Event.reschedule :turtle_time, at: time + 2.hours, was: time, actor: actor
         }.not_to change { scheduled.size}.from(1)
+      end
+
+      it 'will skip jobs of other classes' do
+        OtherWorker.perform_in(1.minute, 'foo')
+
+        expect {
+          Reactor::Event.reschedule :turtle_time, at: time + 2.hours, was: time, actor: actor
+        }.to change { scheduled.size}.from(1).to(2)
       end
     end
   end
