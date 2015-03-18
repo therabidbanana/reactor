@@ -35,7 +35,7 @@ describe Reactor::Subscribable do
   describe 'on_event' do
     it 'binds block of code statically to event being fired' do
       expect_any_instance_of(Auction).to receive(:update_column).with(:status, 'first_bid_made')
-      Reactor::Event.publish(:bid_made, target: Auction.create)
+      Reactor::Event.publish(:bid_made, target: Auction.create!(start_at: 10.minutes.from_now))
     end
 
     describe 'building uniquely named subscriber handler classes' do
@@ -65,7 +65,7 @@ describe Reactor::Subscribable do
 
     it 'accepts wildcard event name' do
       expect_any_instance_of(Auction).to receive(:more_puppies!)
-      Reactor::Event.publish(:another_event, actor: Auction.create)
+      Reactor::Event.publish(:another_event, actor: Auction.create!(start_at: 5.minutes.from_now))
     end
 
     describe 'in_memory flag' do

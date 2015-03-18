@@ -11,14 +11,14 @@ ActiveRecord::Migration.create_table :auctions do |t|
   t.boolean :we_want_it
   t.integer :pet_id
 
-  t.timestamps
+  t.timestamps null: false
 end
 
 ActiveRecord::Migration.create_table :subscribers do |t|
   t.string :event_name
   t.string :type
 
-  t.timestamps
+  t.timestamps null: false
 end
 
 ActiveRecord::Migration.create_table :pets do |t|
@@ -26,13 +26,13 @@ ActiveRecord::Migration.create_table :pets do |t|
   t.string :type
 
 
-  t.timestamps
+  t.timestamps null: false
 end
 
 ActiveRecord::Migration.create_table :arbitrary_models do |t|
   t.integer :awesomeness
 
-  t.timestamps
+  t.timestamps null: false
 end
 
 class Pet < ActiveRecord::Base
