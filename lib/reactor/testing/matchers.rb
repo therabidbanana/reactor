@@ -28,11 +28,11 @@ RSpec::Matchers.define :publish_events do |*names|
   end
 end
 
-RSpec::Matchers.define :subscribe_to do |name, data = {}, &expectations|
+RSpec::Matchers.define :subscribe_to do |name, data = {}|
   supports_block_expectations
 
   match do
-    expectations.call if expectations.present?
+    block_arg.call if block_arg.present?
     Reactor::Event.publish(name, data)
   end
 end
