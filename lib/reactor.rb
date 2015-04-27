@@ -1,5 +1,5 @@
 require "reactor/version"
-require "reactor/models/concerns/publishable"
+require 'active_job'
 require "reactor/models/concerns/subscribable"
 require "reactor/models/concerns/optionally_subclassable"
 require "reactor/models/subscriber"
@@ -12,6 +12,9 @@ module Reactor
   @@test_mode = false
 
   module StaticSubscribers
+  end
+
+  module Jobs
   end
 
   def self.test_mode?
@@ -51,5 +54,6 @@ if ActiveRecord::VERSION::STRING > '4.2'
   ActiveRecord::Base.raise_in_transactional_callbacks = true
 end
 
-ActiveRecord::Base.send(:include, Reactor::Publishable)
 ActiveRecord::Base.send(:include, Reactor::Subscribable)
+
+require "reactor/jobs/subscriber_job"

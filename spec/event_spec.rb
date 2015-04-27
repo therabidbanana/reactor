@@ -11,8 +11,7 @@ end
 class ArbitraryModel < ActiveRecord::Base
 end
 
-class OtherWorker
-  include Sidekiq::Worker
+class OtherWorker < ActiveJob::Base
 end
 
 describe Reactor::Event do
@@ -22,115 +21,31 @@ describe Reactor::Event do
 
   describe 'publish' do
     it 'fires the first perform and sets message event_id' do
-      expect(Reactor::Event).to receive(:perform_async).with(event_name, 'actor_id' => '1', 'event' => :user_did_this)
+      expect(Reactor::Event).to receive(:perform_later).with(actor_id: '1', name: event_name.to_s)
       Reactor::Event.publish(:user_did_this, actor_id: '1')
     end
   end
 
   describe 'perform' do
-    before { Reactor::Subscriber.create(event_name: :user_did_this) }
-    after { Reactor::Subscriber.destroy_all }
-    it 'fires all subscribers' do
-      expect_any_instance_of(Reactor::Subscriber).to receive(:fire).with(hash_including(actor_id: model.id.to_s))
-      Reactor::Event.perform(event_name, actor_id: model.id.to_s, actor_type: model.class.to_s)
-    end
-
-    it 'sets a fired_at key in event data' do
-      expect_any_instance_of(Reactor::Subscriber).to receive(:fire).with(hash_including(fired_at: anything))
-      Reactor::Event.perform(event_name, actor_id: model.id.to_s, actor_type: model.class.to_s)
-    end
-
-    it 'works with the legacy .process method, too' do
-      expect_any_instance_of(Reactor::Subscriber).to receive(:fire).with(hash_including(actor_id: model.id.to_s))
-      Reactor::Event.perform(event_name, actor_id: model.id.to_s, actor_type: model.class.to_s)
-    end
-
-    describe 'when subscriber throws exception', :sidekiq do
-      let(:mock) { double(:thing, some_method: 3) }
-      let(:barfing_event) { Reactor::Event.perform('barfed', somethin: 'up', actor_id: model.id.to_s, actor_type: model.class.to_s) }
-
-      before do
-        Reactor::SUBSCRIBERS['barfed'] ||= []
-        Reactor::SUBSCRIBERS['barfed'] << Reactor::Subscribable::StaticSubscriberFactory.create('barfed') do |event|
-          raise 'UNEXPECTED!'
-        end
-        Reactor::SUBSCRIBERS['barfed'] << Reactor::Subscribable::StaticSubscriberFactory.create('barfed') do |event|
-          mock.some_method
-        end
-      end
-
-      it 'doesnt matter because it runs in a separate worker process' do
-        expect { barfing_event }.to_not raise_exception
-      end
-    end
-  end
-
-  describe 'reschedule', :sidekiq do
-    let(:scheduled) { Sidekiq::ScheduledSet.new }
-    let(:time) { 1.hour.from_now }
-
-    before do
-      Sidekiq::Worker.clear_all
-    end
-
-    it 'can schedule and reschedule an event in the future' do
-      expect {
-        jid = Reactor::Event.publish :turtle_time, at: time
-        expect(scheduled.find_job(jid).score).to eq(time.to_f)
-      }.to change { scheduled.size }.by(1)
-
-      expect {
-        jid = Reactor::Event.reschedule :turtle_time, at: (time + 2.hours), was: time
-        expect(scheduled.find_job(jid).score).to eq((time + 2.hours).to_f)
-      }.to_not change { scheduled.size }
-    end
-
-    it 'will schedule an event in the future even if that event was not previously scheduled in the past' do
-      expect {
-        jid = Reactor::Event.reschedule :no_old_turtle_time, at: (time + 2.hours), was: time
-        expect(scheduled.find_job(jid).score).to eq((time + 2.hours).to_f)
-      }.to change{ scheduled.size }.by(1)
-    end
-
-    it 'will not schedule an event when the time passed in is nil' do
-      expect {
-        Reactor::Event.reschedule :no_old_turtle_time, at: nil, was: time
-      }.to_not change{ scheduled.size }
-    end
-
-    context 'when an actor is passed' do
-      let(:actor) { ArbitraryModel.create! }
-
-      it 'will not delete a job which is not associated with the actor' do
-        Reactor::Event.publish :turtle_time, at: time
-
-        expect {
-          Reactor::Event.reschedule :turtle_time, at: time + 2.hours, was: time, actor: actor
-        }.to change { scheduled.size}.from(1).to(2)
-      end
-
-      it 'will delete a job associated with the actor' do
-        Reactor::Event.publish :turtle_time, at: time, actor: actor
-
-        expect {
-          Reactor::Event.reschedule :turtle_time, at: time + 2.hours, was: time, actor: actor
-        }.not_to change { scheduled.size}.from(1)
-      end
-
-      it 'will skip jobs of other classes' do
-        OtherWorker.perform_in(1.minute, 'foo')
-
-        expect {
-          Reactor::Event.reschedule :turtle_time, at: time + 2.hours, was: time, actor: actor
-        }.to change { scheduled.size}.from(1).to(2)
+    let!(:db_subscriber) { Reactor::Subscriber.create(event_name: :user_did_this) }
+    it 'fires all db subscribers' do
+      Timecop.freeze do
+        expect(Reactor::Jobs::SubscriberJob).to receive(:perform_later)
+                                                    .with(db_subscriber,
+                                                          hash_including(
+                                                              name: event_name.to_s,
+                                                              actor_id: model.id,
+                                                              actor_type: model.class.to_s,
+                                                              fired_at: Time.current.to_i))
+        Reactor::Event.perform_now(name: event_name.to_s, actor_id: model.id, actor_type: model.class.to_s)
       end
     end
   end
 
   describe 'event content' do
-    let(:cat) { MyModule::Cat.create }
+    let!(:cat) { MyModule::Cat.create }
     let(:arbitrary_model) { ArbitraryModel.create }
-    let(:event_data) { {random: 'data', pet_id: cat.id, pet_type: cat.class.to_s, arbitrary_model: arbitrary_model } }
+    let(:event_data) { {random: 'data', arbitrary_model: arbitrary_model, pet: cat } }
     let(:event) { Reactor::Event.new(event_data) }
 
     describe 'data key fallthrough' do
@@ -155,8 +70,8 @@ describe Reactor::Event do
 
         it 'sets active_record polymorphic keys' do
           event.complex = cat = MyModule::Cat.create
-          event.complex_id = cat.id
-          event.complex_type = cat.class.to_s
+          expect(event.complex_id).to eql(cat.id)
+          expect(event.complex_type).to eql(cat.class.to_s)
         end
       end
     end
@@ -169,8 +84,8 @@ describe Reactor::Event do
 
     describe 'new' do
       specify { expect(event).to be_a Reactor::Event }
-      specify { expect(event.pet_id).to eq(cat.id) }
-      specify { expect(event.arbitrary_model_id).to eq(arbitrary_model.id) }
+      specify { expect(event.arbitrary_model).to eq(arbitrary_model) }
+      specify { expect(event.random).to eq('data') }
     end
   end
 end
