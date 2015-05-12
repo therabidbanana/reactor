@@ -1,6 +1,8 @@
 require 'spec_helper'
 
 class Auction < ActiveRecord::Base
+  include GlobalID::Identification
+
   on_event :bid_made do |event|
     event.target.update_column :status, 'first_bid_made'
   end
@@ -9,7 +11,7 @@ class Auction < ActiveRecord::Base
   on_event :puppy_delivered, -> (event) { }
   on_event :any_event, -> (event) {  puppies! }
   on_event '*' do |event|
-    event.actor.more_puppies! if event.name == 'another_event'
+    event.actor.more_puppies!(event.time) if event.name == 'another_event'
   end
 
   def self.ring_bell(event)
@@ -52,6 +54,16 @@ describe Reactor::Subscribable do
     it 'accepts wildcard event name' do
       expect_any_instance_of(Auction).to receive(:more_puppies!)
       Reactor::Event.publish(:another_event, actor: Auction.create!(start_at: 5.minutes.from_now))
+    end
+
+    describe 'time deserialization' do
+      it 'accepts wildcard event name' do
+        now = Time.current
+        expect_any_instance_of(Auction).to receive(:more_puppies!) do |instance, time|
+          expect(time).to be_within(1.second).of(now)
+        end
+        Reactor::Event.publish(:another_event, actor: Auction.create!(start_at: 5.minutes.from_now), time: now)
+      end
     end
 
     describe '#perform' do

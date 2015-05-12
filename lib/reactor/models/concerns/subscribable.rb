@@ -19,7 +19,7 @@ module Reactor::Subscribable
         i+= 1
       end while Reactor::StaticSubscribers.const_defined?(new_class)
 
-      klass = Class.new(ActiveJob::Base) do
+      klass = Class.new(Reactor::Jobs::Base) do
 
         class_attribute :method, :delay, :source, :dont_perform
 

@@ -1,17 +1,12 @@
-class Reactor::Event < ActiveJob::Base
-  attr_accessor :data
+class Reactor::Event < Reactor::Jobs::Base
 
   def initialize(data = {})
-    super(data)
-    self.data = {}.with_indifferent_access
-    data.each do |key, value|
-      self.send("#{key}=", value)
-    end
+    super(data.stringify_keys)
   end
 
   def perform(data)
     data = data.with_indifferent_access
-    data.merge!(fired_at: Time.current.to_i)
+    data.merge!(fired_at: Time.current)
     fire_database_driven_subscribers(data)
     fire_block_subscribers(data)
   end
@@ -25,50 +20,27 @@ class Reactor::Event < ActiveJob::Base
   end
 
   def self.publish(name, data = {})
-    message = new(data.merge(name: name.to_s))
-
-    if message.at
-      set(wait_until: message.at).perform_later message.data
-    else
-      perform_later message.data
-    end
+    perform_later({name: name.to_s}.merge(data))
   end
 
   private
 
   def try_setter(method, object, *args)
-    if object.is_a? ActiveRecord::Base
-      send("#{method}_id", object.id)
-      send("#{method}_type", object.class.to_s)
-    else
-      data[method.to_s.gsub('=','')] = object
-    end
+    arguments.first[method.to_s.gsub('=','')] = object
   end
 
   def try_getter(method)
-    if polymorphic_association? method
-      initialize_polymorphic_association method
-    elsif data.has_key?(method)
-      data[method]
-    end
-  end
-
-  def polymorphic_association?(method)
-    data.has_key?("#{method}_type")
-  end
-
-  def initialize_polymorphic_association(method)
-    data["#{method}_type"].constantize.find(data["#{method}_id"])
+    arguments.first[method.to_s]
   end
 
   def fire_database_driven_subscribers(data)
     #TODO: support more matching?
-    Reactor::Subscriber.where(event_name: [data[:name], '*']).each do |subscriber|
+    Reactor::Subscriber.where(event_name: [name, '*']).each do |subscriber|
       Reactor::Jobs::SubscriberJob.perform_later subscriber, data
     end
   end
 
   def fire_block_subscribers(data)
-    ((Reactor::SUBSCRIBERS[data[:name].to_s] || []) | (Reactor::SUBSCRIBERS['*'] || [])).each { |s| s.perform_where_needed(data) }
+    ((Reactor::SUBSCRIBERS[name] || []) | (Reactor::SUBSCRIBERS['*'] || [])).each { |s| s.perform_where_needed(data) }
   end
 end

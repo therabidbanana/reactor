@@ -4,7 +4,6 @@ require "reactor/models/concerns/subscribable"
 require "reactor/models/concerns/optionally_subclassable"
 require "reactor/models/subscriber"
 require "reactor/controllers/concerns/resource_actionable"
-require "reactor/event"
 
 module Reactor
   SUBSCRIBERS = {}
@@ -56,4 +55,8 @@ end
 
 ActiveRecord::Base.send(:include, Reactor::Subscribable)
 
+require "reactor/jobs/base"
+require "reactor/event"
+require "reactor/arguments"
 require "reactor/jobs/subscriber_job"
+

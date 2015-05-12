@@ -26,7 +26,7 @@ describe Reactor::Subscriber do
     it 'can be set to star to bind to all events' do
       s = MySubscriber.create!(event_name: '*')
       expect(Reactor::Jobs::SubscriberJob).to receive(:perform_later).with(s, hash_including('random' => 'data', 'name' => 'this_event'))
-      Reactor::Event.publish(:this_event, {random: 'data'})
+      Reactor::Event.publish(:this_event, random: 'data')
     end
   end
 end
