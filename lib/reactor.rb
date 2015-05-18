@@ -1,6 +1,7 @@
 require "reactor/version"
 require 'active_job'
 require "reactor/models/concerns/subscribable"
+require "reactor/models/concerns/publishable"
 require "reactor/models/concerns/optionally_subclassable"
 require "reactor/models/subscriber"
 require "reactor/controllers/concerns/resource_actionable"
@@ -54,6 +55,7 @@ if ActiveRecord::VERSION::STRING > '4.2'
 end
 
 ActiveRecord::Base.send(:include, Reactor::Subscribable)
+ActiveRecord::Base.send(:include, Reactor::Publishable)
 
 require "reactor/jobs/base"
 require "reactor/event"
