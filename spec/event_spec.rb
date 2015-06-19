@@ -25,6 +25,23 @@ describe Reactor::Event do
       expect(Reactor::Event).to receive(:perform_async).with(event_name, 'actor_id' => '1', 'event' => :user_did_this)
       Reactor::Event.publish(:user_did_this, actor_id: '1')
     end
+
+    context 'when in a production rails console' do
+      it 'requires a second argument console_confirmation: true' do
+        stub_const('Rails::Console', Class.new)
+        ENV['RACK_ENV'] = 'production'
+
+        expect {
+          Reactor::Event.publish(:thing)
+        }.to raise_exception(ArgumentError)
+
+        expect {
+          Reactor::Event.publish(:thing, console_confirmation: true)
+        }.to_not raise_exception
+
+        ENV['RACK_ENV'] = 'development'
+      end
+    end
   end
 
   describe 'perform' do

@@ -54,6 +54,9 @@ class Reactor::Event
     end
 
     def publish(name, data = {})
+      if defined?(Rails::Console) && ENV['RACK_ENV'] == 'production' && data[:console_confirmation].blank?
+        raise ArgumentError.new('It looks like you are on a production console. Only fire an event if you intend to trigger all of its subscribers. In order to proceed, you must pass `console_confirmation: true` in the event data.')
+      end
       message = new(data.merge(event: name))
 
       if message.at
