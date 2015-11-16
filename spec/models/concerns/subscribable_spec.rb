@@ -18,13 +18,13 @@ class Auction < ActiveRecord::Base
   end
 
   def self.ring_bell(event)
-    pp "ring ring! #{event}"
+    "ring ring! #{event}"
   end
 end
 
 Reactor.in_test_mode do
   class TestModeAuction < ActiveRecord::Base
-    on_event :test_puppy_delivered, -> (event) { pp "success" }
+    on_event :test_puppy_delivered, -> (event) { "success" }
   end
 end
 
