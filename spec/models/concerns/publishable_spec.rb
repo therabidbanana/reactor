@@ -118,6 +118,32 @@ describe Reactor::Publishable do
 
         expect{ Reactor::Event.perform(@job_args[0], @job_args[1]) }.to_not change{ Sidekiq::Extensions::DelayedClass.jobs.size }
       end
+
+      it 'keeps the if intact when rescheduling' do
+        old_start_at = auction.start_at
+        auction.start_at = 3.day.from_now
+        allow(Reactor::Event).to receive(:publish)
+        expect(Reactor::Event).to receive(:publish).with(:conditional_event_on_save, {
+          at: auction.start_at,
+          actor: auction,
+          target: nil,
+          was: old_start_at,
+          if: anything
+        })
+        auction.save!
+      end
+
+      it 'keeps the if intact when scheduling' do
+        start_at = 3.days.from_now
+        allow(Reactor::Event).to receive(:publish)
+        expect(Reactor::Event).to receive(:publish).with(:conditional_event_on_save, {
+          at: start_at,
+          actor: anything,
+          target: nil,
+          if: anything
+        })
+        Auction.create!(start_at: start_at)
+      end
     end
 
     it 'supports immediate events (on create) that get fired once' do

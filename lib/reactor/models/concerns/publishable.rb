@@ -60,6 +60,6 @@ module Reactor::Publishable
         actor: (signature[:actor] ? send(signature[:actor]) : self),
         target: (signature[:target] ? self : nil),
         at: (signature[:at] ? send(signature[:at]) : nil)
-    ).except(:watch, :if)
+    ).except(:watch)
   end
 end
