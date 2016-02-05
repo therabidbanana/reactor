@@ -1,7 +1,7 @@
 PATH
   remote: .
   specs:
-    reactor (0.9.9)
+    reactor (0.1.0)
       activerecord (< 5.0)
       sidekiq (< 4.0)
 
@@ -107,4 +107,4 @@ DEPENDENCIES
   test_after_commit
 
 BUNDLED WITH
-   1.10.6
+   1.11.2
