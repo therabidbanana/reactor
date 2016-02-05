@@ -21,8 +21,17 @@ describe Reactor::Event do
   let(:event_name) { :user_did_this }
 
   describe 'publish' do
+    let!(:uuid) { 'uuid' }
+    before { allow(SecureRandom).to receive(:uuid).and_return(uuid) }
+
+
     it 'fires the first perform and sets message event_id' do
-      expect(Reactor::Event).to receive(:perform_async).with(event_name, 'actor_id' => '1', 'event' => :user_did_this)
+      expect(Reactor::Event).to receive(:perform_async).with(event_name, 'actor_id' => '1', 'event' => :user_did_this, 'uuid' => uuid)
+      Reactor::Event.publish(:user_did_this, actor_id: '1')
+    end
+
+    it 'generates and assigns a UUID to the event' do
+      expect(Reactor::Event).to receive(:perform_async).with(event_name, 'actor_id' => '1', 'event' => :user_did_this, 'uuid' => uuid)
       Reactor::Event.publish(:user_did_this, actor_id: '1')
     end
   end
