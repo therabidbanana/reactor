@@ -22,16 +22,23 @@ describe Reactor::Event do
 
   describe 'publish' do
     let!(:uuid) { 'uuid' }
+    let!(:now) { Time.current }
     before { allow(SecureRandom).to receive(:uuid).and_return(uuid) }
+    before { allow(Time).to receive(:current).and_return(now) }
 
 
     it 'fires the first perform and sets message event_id' do
-      expect(Reactor::Event).to receive(:perform_async).with(event_name, 'actor_id' => '1', 'event' => :user_did_this, 'uuid' => uuid)
+      expect(Reactor::Event).to receive(:perform_async).with(event_name, hash_including('actor_id' => '1', 'event' => :user_did_this))
       Reactor::Event.publish(:user_did_this, actor_id: '1')
     end
 
     it 'generates and assigns a UUID to the event' do
-      expect(Reactor::Event).to receive(:perform_async).with(event_name, 'actor_id' => '1', 'event' => :user_did_this, 'uuid' => uuid)
+      expect(Reactor::Event).to receive(:perform_async).with(event_name, hash_including('uuid' => uuid))
+      Reactor::Event.publish(:user_did_this, actor_id: '1')
+    end
+
+    it 'sets a fired_at key in event data' do
+      expect(Reactor::Event).to receive(:perform_async).with(event_name, hash_including('fired_at' => now))
       Reactor::Event.publish(:user_did_this, actor_id: '1')
     end
   end
@@ -41,11 +48,6 @@ describe Reactor::Event do
     after { Reactor::Subscriber.destroy_all }
     it 'fires all subscribers' do
       expect_any_instance_of(Reactor::Subscriber).to receive(:fire).with(hash_including(actor_id: model.id.to_s))
-      Reactor::Event.perform(event_name, actor_id: model.id.to_s, actor_type: model.class.to_s)
-    end
-
-    it 'sets a fired_at key in event data' do
-      expect_any_instance_of(Reactor::Subscriber).to receive(:fire).with(hash_including(fired_at: anything))
       Reactor::Event.perform(event_name, actor_id: model.id.to_s, actor_type: model.class.to_s)
     end
 

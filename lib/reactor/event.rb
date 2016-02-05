@@ -54,7 +54,7 @@ class Reactor::Event
     end
 
     def publish(name, data = {})
-      message = new(data.merge(event: name, uuid: SecureRandom.uuid))
+      message = new(data.merge(event: name, uuid: SecureRandom.uuid, fired_at: Time.current))
 
       if message.at
         perform_at message.at, name, message.data
