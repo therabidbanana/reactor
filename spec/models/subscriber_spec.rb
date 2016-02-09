@@ -23,8 +23,10 @@ describe Reactor::Subscriber do
 
 
   describe 'matcher' do
+    before { MySubscriber.create!(event_name: '*') }
+    after { MySubscriber.destroy_all }
+
     it 'can be set to star to bind to all events' do
-      MySubscriber.create!(event_name: '*')
       expect_any_instance_of(MySubscriber).to receive(:fire).with(hash_including('random' => 'data', 'event' => 'this_event'))
       Reactor::Event.publish(:this_event, {random: 'data'})
     end
