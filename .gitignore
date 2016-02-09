@@ -16,6 +16,5 @@ test/version_tmp
 tmp
 tags
 .rvmrc
-.ruby-version
 .ruby-gemset
 .idea

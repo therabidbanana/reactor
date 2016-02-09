@@ -1,7 +1,7 @@
 PATH
   remote: .
   specs:
-    reactor (0.1.0)
+    reactor (0.10.0)
       activerecord (< 5.0)
       sidekiq (< 4.0)
 
@@ -24,7 +24,7 @@ GEM
     arel (6.0.3)
     builder (3.2.2)
     byebug (8.2.0)
-    celluloid (0.17.2)
+    celluloid (0.17.3)
       celluloid-essentials
       celluloid-extras
       celluloid-fsm
@@ -76,7 +76,7 @@ GEM
       diff-lcs (>= 1.2.0, < 2.0)
       rspec-support (~> 3.4.0)
     rspec-support (3.4.1)
-    sidekiq (3.5.3)
+    sidekiq (3.5.4)
       celluloid (~> 0.17.2)
       connection_pool (~> 2.2, >= 2.2.0)
       json (~> 1.0)
