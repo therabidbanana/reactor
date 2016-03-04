@@ -1,5 +1,12 @@
 # Reactor Change Log
 
+0.12.0
+-----------
+Use `__data__` as the internal data hash. THIS _MAY BE_ A BREAKING CHANGE.
+
+If someone wants to use the key `data` for their event attributes, it would get confused with the internal event data. The internal event data is now called `__data__`. 
+Some users of this library access event.data directly. This is a breaking change for them.
+
 0.11.4
 -----------
 Fixes an issue related to class reloading in Rails development and test modes

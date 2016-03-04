@@ -140,7 +140,7 @@ describe Reactor::Event do
     let(:event_data) { {random: 'data', pet_id: cat.id, pet_type: cat.class.to_s, arbitrary_model: arbitrary_model } }
     let(:event) { Reactor::Event.new(event_data) }
 
-    describe 'data key fallthrough' do
+    describe 'data key interaction with internals' do
       subject { event }
 
       describe 'getters' do
@@ -152,12 +152,30 @@ describe Reactor::Event do
           its(:pet) { is_expected.to be_a MyModule::Cat }
           its('pet.id') { is_expected.to eq(MyModule::Cat.last.id) }
         end
+
+        context 'accessing the internal __data__' do
+          its(:__data__) do
+            is_expected.to eq ({
+                  'random' => 'data',
+                  'pet_id' => cat.id,
+                  'pet_type' => 'MyModule::Cat',
+                  'arbitrary_model_id' => arbitrary_model.id,
+                  'arbitrary_model_type' => arbitrary_model.class.name
+                })
+          end
+        end
+
+        context 'a key named "data"' do
+          let(:event_data) { {random: 'data', data: 'info' } }
+          its(:random) { is_expected.to eq('data') }
+          its(:data) { is_expected.to eq 'info' }
+        end
       end
 
       describe 'setters' do
         it 'sets simple keys' do
           event.simple = 'key'
-          expect(event.data[:simple]).to eq('key')
+          expect(event.__data__[:simple]).to eq('key')
         end
 
         it 'sets active_record polymorphic keys' do
@@ -168,8 +186,8 @@ describe Reactor::Event do
       end
     end
 
-    describe 'data' do
-      let(:serialized_event) { event.data }
+    describe '__data__' do
+      let(:serialized_event) { event.__data__ }
       specify { expect(serialized_event).to be_a Hash }
       specify { expect(serialized_event[:random]).to eq('data') }
     end
