@@ -1,6 +1,8 @@
 module Reactor::Subscribable
   extend ActiveSupport::Concern
 
+  class EventHandlerAlreadyDefined < StandardError ; end
+
   module ClassMethods
     def on_event(*args, &block)
       options = args.extract_options!
@@ -12,12 +14,14 @@ module Reactor::Subscribable
   class StaticSubscriberFactory
 
     def self.create(event, method = nil, options = {}, &block)
-      handler_class_prefix = event == '*' ? 'Wildcard': event.to_s.camelize
-      i = 0
-      begin
-        new_class = "#{handler_class_prefix}Handler#{i}"
-        i+= 1
-      end while Reactor::StaticSubscribers.const_defined?(new_class)
+      source_class          = options[:source] ? options[:source].name : 'Anonymous'
+
+      handler_name = if options[:handler_name]
+        options[:handler_name].to_s.camelize
+      else
+        handler_class_prefix = event == '*' ? 'Wildcard': event.to_s.camelize
+        "#{handler_class_prefix}Handler"
+      end
 
       klass = Class.new do
         include Sidekiq::Worker
@@ -43,7 +47,21 @@ module Reactor::Subscribable
         end
       end
 
-      Reactor::StaticSubscribers.const_set(new_class, klass)
+      # dynamically define a module namespace based on the subscriber's class name
+      unless Reactor::StaticSubscribers.const_defined?(source_class, false)
+        Reactor::StaticSubscribers.const_set(source_class, Module.new)
+      end
+
+      namespace = Reactor::StaticSubscribers.const_get(source_class, false)
+
+      if namespace.const_defined?(handler_name)
+        raise EventHandlerAlreadyDefined.new %{ A Reactor event named #{handler_name} already has been defined on #{namespace}.
+            Specify a `:handler_name` option on your subscriber's `on_event` declaration to name this event handler deterministically.
+          }
+      end
+
+      # add the event handler class to the namespace
+      namespace.const_set(handler_name, klass)
 
       klass.tap do |k|
         k.method = method || block

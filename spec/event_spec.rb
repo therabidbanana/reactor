@@ -60,10 +60,10 @@ describe Reactor::Event do
 
       before do
         Reactor::SUBSCRIBERS['barfed'] ||= []
-        Reactor::SUBSCRIBERS['barfed'] << Reactor::Subscribable::StaticSubscriberFactory.create('barfed') do |event|
+        Reactor::SUBSCRIBERS['barfed'] << Reactor::Subscribable::StaticSubscriberFactory.create('barfed', nil, handler_name: 'bad') do |event|
           raise 'UNEXPECTED!'
         end
-        Reactor::SUBSCRIBERS['barfed'] << Reactor::Subscribable::StaticSubscriberFactory.create('barfed') do |event|
+        Reactor::SUBSCRIBERS['barfed'] << Reactor::Subscribable::StaticSubscriberFactory.create('barfed', nil, handler_name: 'good') do |event|
           mock.some_method
         end
       end
