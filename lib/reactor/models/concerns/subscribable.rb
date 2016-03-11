@@ -1,25 +1,38 @@
 module Reactor::Subscribable
   extend ActiveSupport::Concern
 
+  class EventHandlerAlreadyDefined < StandardError ; end
+
   module ClassMethods
     def on_event(*args, &block)
       options = args.extract_options!
       event, method = args
-      (Reactor::SUBSCRIBERS[event.to_s] ||= []).push(StaticSubscriberFactory.create(event, method, {source: self}.merge(options), &block))
+      (Reactor::SUBSCRIBERS[event.to_s] ||= []).push(create_static_subscriber(event, method, options, &block))
     end
-  end
 
-  class StaticSubscriberFactory
+    private
 
-    def self.create(event, method = nil, options = {}, &block)
-      handler_class_prefix = event == '*' ? 'Wildcard': event.to_s.camelize
-      i = 0
-      begin
-        new_class = "#{handler_class_prefix}Handler#{i}"
-        i+= 1
-      end while Reactor::StaticSubscribers.const_defined?(new_class)
+    def create_static_subscriber(event, method = nil, options = {}, &block)
+      worker_class = build_worker_class
 
-      klass = Class.new do
+      name_worker_class worker_class, handler_name(event, options[:handler_name])
+
+      worker_class.tap do |k|
+        k.source = self
+        k.method = method || block
+        k.delay = options[:delay] || 0
+        k.in_memory = options[:in_memory]
+        k.dont_perform = Reactor.test_mode?
+      end
+    end
+
+    def handler_name(event, handler_name_option = nil)
+      return handler_name_option.to_s.camelize if handler_name_option
+      "#{event == '*' ? 'Wildcard': event.to_s.camelize}Handler"
+    end
+
+    def build_worker_class
+      Class.new do
         include Sidekiq::Worker
 
         class_attribute :method, :delay, :source, :in_memory, :dont_perform
@@ -42,16 +55,24 @@ module Reactor::Subscribable
           end
         end
       end
+    end
 
-      Reactor::StaticSubscribers.const_set(new_class, klass)
-
-      klass.tap do |k|
-        k.method = method || block
-        k.delay = options[:delay] || 0
-        k.source = options[:source]
-        k.in_memory = options[:in_memory]
-        k.dont_perform = Reactor.test_mode?
+    def name_worker_class(klass, handler_name)
+      if static_subscriber_namespace.const_defined?(handler_name)
+        raise EventHandlerAlreadyDefined.new(
+          "A Reactor event named #{handler_name} already has been defined on #{static_subscriber_namespace}.
+           Specify a `:handler_name` option on your subscriber's `on_event` declaration to name this event handler deterministically."
+        )
       end
+      static_subscriber_namespace.const_set(handler_name, klass)
+    end
+
+    def static_subscriber_namespace
+      unless Reactor::StaticSubscribers.const_defined?(self.name, false)
+        Reactor::StaticSubscribers.const_set(self.name, Module.new)
+      end
+
+      Reactor::StaticSubscribers.const_get(self.name, false)
     end
   end
 end

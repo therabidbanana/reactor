@@ -9,6 +9,15 @@ module MyModule
 end
 
 class ArbitraryModel < ActiveRecord::Base
+
+  on_event :barfed, handler_name: :bad do
+    raise 'UNEXPECTED!'
+  end
+
+  on_event :barfed do
+    'that was gross'
+  end
+
 end
 
 class OtherWorker
@@ -55,18 +64,7 @@ describe Reactor::Event do
     end
 
     describe 'when subscriber throws exception', :sidekiq do
-      let(:mock) { double(:thing, some_method: 3) }
       let(:barfing_event) { Reactor::Event.perform('barfed', somethin: 'up', actor_id: model.id.to_s, actor_type: model.class.to_s) }
-
-      before do
-        Reactor::SUBSCRIBERS['barfed'] ||= []
-        Reactor::SUBSCRIBERS['barfed'] << Reactor::Subscribable::StaticSubscriberFactory.create('barfed') do |event|
-          raise 'UNEXPECTED!'
-        end
-        Reactor::SUBSCRIBERS['barfed'] << Reactor::Subscribable::StaticSubscriberFactory.create('barfed') do |event|
-          mock.some_method
-        end
-      end
 
       it 'doesnt matter because it runs in a separate worker process' do
         expect { barfing_event }.to_not raise_exception

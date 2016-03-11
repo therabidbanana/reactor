@@ -1,14 +1,14 @@
 require 'spec_helper'
 
+Reactor.in_test_mode do
+  class SomeClass
+    include Reactor::Subscribable
+    on_event :test_event, -> (event) { self.spy_on_me }
+  end
+end
 
 describe Reactor do
-  let(:subscriber) do
-    Reactor.in_test_mode do
-      Class.new(ActiveRecord::Base) do
-        on_event :test_event, -> (event) { self.spy_on_me }
-      end
-    end
-  end
+  let(:subscriber) { SomeClass }
 
   describe '.test_mode!' do
     it 'sets Reactor into test mode' do

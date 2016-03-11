@@ -6,7 +6,9 @@ class Auction < ActiveRecord::Base
   end
 
   on_event :puppy_delivered, :ring_bell
-  on_event :puppy_delivered, -> (event) { }
+  on_event :puppy_delivered, handler_name: :do_nothing_handler do |event|
+
+  end
   on_event :any_event, -> (event) {  puppies! }
   on_event :pooped, :pick_up_poop, delay: 5.minutes
   on_event '*' do |event|
@@ -40,8 +42,8 @@ describe Reactor::Subscribable do
 
     describe 'building uniquely named subscriber handler classes' do
       it 'adds a static subscriber to the global lookup constant' do
-        expect(Reactor::SUBSCRIBERS['puppy_delivered'][0]).to eq(Reactor::StaticSubscribers::PuppyDeliveredHandler0)
-        expect(Reactor::SUBSCRIBERS['puppy_delivered'][1]).to eq(Reactor::StaticSubscribers::PuppyDeliveredHandler1)
+        expect(Reactor::SUBSCRIBERS['puppy_delivered'][0]).to eq(Reactor::StaticSubscribers::Auction::PuppyDeliveredHandler)
+        expect(Reactor::SUBSCRIBERS['puppy_delivered'][1]).to eq(Reactor::StaticSubscribers::Auction::DoNothingHandler)
       end
     end
 
@@ -71,25 +73,25 @@ describe Reactor::Subscribable do
     describe 'in_memory flag' do
       it 'doesnt fire perform_async when true' do
         expect(Auction).to receive(:puppies!)
-        expect(Reactor::StaticSubscribers::CatDeliveredHandler0).not_to receive(:perform_async)
+        expect(Reactor::StaticSubscribers::Auction::CatDeliveredHandler).not_to receive(:perform_async)
         Reactor::Event.publish(:cat_delivered)
       end
 
       it 'fires perform_async when falsey' do
-        expect(Reactor::StaticSubscribers::WildcardHandler0).to receive(:perform_async)
+        expect(Reactor::StaticSubscribers::Auction::WildcardHandler).to receive(:perform_async)
         Reactor::Event.publish(:puppy_delivered)
       end
     end
 
     describe '#perform' do
       it 'returns :__perform_aborted__ when Reactor is in test mode' do
-        expect(Reactor::StaticSubscribers::TestPuppyDeliveredHandler0.new.perform({})).to eq(:__perform_aborted__)
+        expect(Reactor::StaticSubscribers::TestModeAuction::TestPuppyDeliveredHandler.new.perform({})).to eq(:__perform_aborted__)
         Reactor::Event.publish(:test_puppy_delivered)
       end
 
       it 'performs normally when specifically enabled' do
         Reactor.enable_test_mode_subscriber(TestModeAuction)
-        expect(Reactor::StaticSubscribers::TestPuppyDeliveredHandler0.new.perform({})).not_to eq(:__perform_aborted__)
+        expect(Reactor::StaticSubscribers::TestModeAuction::TestPuppyDeliveredHandler.new.perform({})).not_to eq(:__perform_aborted__)
         Reactor::Event.publish(:test_puppy_delivered)
       end
     end
