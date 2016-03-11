@@ -24,6 +24,17 @@ class Auction < ActiveRecord::Base
   end
 end
 
+module MyNamespace
+  class MyClass
+    include Reactor::Subscribable
+    on_event :rain, :umbrella
+  end
+
+  def self.umbrella
+    puts 'get an umbrella'
+  end
+end
+
 Reactor.in_test_mode do
   class TestModeAuction < ActiveRecord::Base
     on_event :test_puppy_delivered, -> (event) { "success" }
@@ -44,6 +55,10 @@ describe Reactor::Subscribable do
       it 'adds a static subscriber to the global lookup constant' do
         expect(Reactor::SUBSCRIBERS['puppy_delivered'][0]).to eq(Reactor::StaticSubscribers::Auction::PuppyDeliveredHandler)
         expect(Reactor::SUBSCRIBERS['puppy_delivered'][1]).to eq(Reactor::StaticSubscribers::Auction::DoNothingHandler)
+      end
+
+      it 'adds a static subscriber for namespaced classes' do
+        expect(Reactor::SUBSCRIBERS['rain'][0]).to eq(Reactor::StaticSubscribers::MyClass::RainHandler)
       end
     end
 

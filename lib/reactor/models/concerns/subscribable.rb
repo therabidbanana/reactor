@@ -68,11 +68,12 @@ module Reactor::Subscribable
     end
 
     def static_subscriber_namespace
-      unless Reactor::StaticSubscribers.const_defined?(self.name, false)
-        Reactor::StaticSubscribers.const_set(self.name, Module.new)
+      ns = self.name.demodulize
+      unless Reactor::StaticSubscribers.const_defined?(ns, false)
+        Reactor::StaticSubscribers.const_set(ns, Module.new)
       end
 
-      Reactor::StaticSubscribers.const_get(self.name, false)
+      Reactor::StaticSubscribers.const_get(ns, false)
     end
   end
 end
