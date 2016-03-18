@@ -7,6 +7,7 @@ class Reactor::Event
   def initialize(data = {})
     self.data = {}.with_indifferent_access
     data.each do |key, value|
+      value = value.encode('UTF-8', 'binary', invalid: :replace, undef: :replace, replace: '') if value.is_a?(String)
       self.send("#{key}=", value)
     end
   end

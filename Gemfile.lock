@@ -1,7 +1,7 @@
 PATH
   remote: .
   specs:
-    reactor (0.11.1)
+    reactor (0.11.2)
       activerecord (< 5.0)
       sidekiq
 

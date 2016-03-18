@@ -1,5 +1,9 @@
 # Reactor Change Log
 
+0.11.2
+-----------
+Safely handle bad UTF-8 encoded strings passed in as event arguments
+
 0.11.1
 -----------
 Bug fix for namespaced Subscribable objects
