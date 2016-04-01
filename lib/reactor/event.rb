@@ -2,10 +2,10 @@ class Reactor::Event
   include Reactor::OptionallySubclassable
   include Sidekiq::Worker
 
-  attr_accessor :data
+  attr_accessor :__data__
 
   def initialize(data = {})
-    self.data = {}.with_indifferent_access
+    self.__data__ = {}.with_indifferent_access
     data.each do |key, value|
       value = value.encode('UTF-8', 'binary', invalid: :replace, undef: :replace, replace: '') if value.is_a?(String)
       self.send("#{key}=", value)
@@ -58,9 +58,9 @@ class Reactor::Event
       message = new(data.merge(event: name, uuid: SecureRandom.uuid))
 
       if message.at
-        perform_at message.at, name, message.data
+        perform_at message.at, name, message.__data__
       else
-        perform_async name, message.data
+        perform_async name, message.__data__
       end
     end
 
@@ -95,24 +95,24 @@ class Reactor::Event
       send("#{method}_id", object.id)
       send("#{method}_type", object.class.to_s)
     else
-      data[method.to_s.gsub('=','')] = object
+      __data__[method.to_s.gsub('=','')] = object
     end
   end
 
   def try_getter(method)
     if polymorphic_association? method
       initialize_polymorphic_association method
-    elsif data.has_key?(method)
-      data[method]
+    elsif __data__.has_key?(method)
+      __data__[method]
     end
   end
 
   def polymorphic_association?(method)
-    data.has_key?("#{method}_type")
+    __data__.has_key?("#{method}_type")
   end
 
   def initialize_polymorphic_association(method)
-    data["#{method}_type"].constantize.find(data["#{method}_id"])
+    __data__["#{method}_type"].constantize.find(__data__["#{method}_id"])
   end
 
   def fire_database_driven_subscribers(data, name)
