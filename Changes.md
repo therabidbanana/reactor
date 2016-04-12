@@ -1,5 +1,9 @@
 # Reactor Change Log
 
+0.12.1
+-----------
+Fix unicode encoding protection to allow valid multi-byte unicode characters
+
 0.12.0
 -----------
 Use `__data__` as the internal data hash. THIS _MAY BE_ A BREAKING CHANGE.

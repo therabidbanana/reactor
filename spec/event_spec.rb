@@ -29,6 +29,23 @@ describe Reactor::Event do
   let(:model) { ArbitraryModel.create! }
   let(:event_name) { :user_did_this }
 
+  describe 'encoding' do
+    let(:event) { Reactor::Event.new(thing_one: "\xAD", thing_two: "\xAB", money: "£900", emoji: "\u{1f4a9}") }
+
+    it 'strips bad characters' do
+      expect(event.thing_one).to eq('')
+      expect(event.thing_two).to eq('')
+    end
+
+    it 'allows valid multibyte UTF8' do
+      expect(event.money).to eq('£900')
+    end
+
+    it 'allows astral plane characters' do
+      expect(event.emoji).to eq("\u{1f4a9}")
+    end
+  end
+
   describe 'publish' do
     let!(:uuid) { 'uuid' }
     before { allow(SecureRandom).to receive(:uuid).and_return(uuid) }
