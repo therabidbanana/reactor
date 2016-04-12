@@ -51,12 +51,6 @@ describe Reactor::Subscribable do
       Reactor::Event.publish(:bid_made, target: Auction.create!(start_at: 10.minutes.from_now))
     end
 
-    it 'protects against bad unicode characters in event attributes' do
-      expect {
-        Reactor::Event.publish(:bad_unicode, thing_one: "\xAD", thing_two: "\xAB" )
-      }.to_not raise_error
-    end
-
     describe 'building uniquely named subscriber handler classes' do
       it 'adds a static subscriber to the global lookup constant' do
         expect(Reactor::SUBSCRIBERS['puppy_delivered'][0]).to eq(Reactor::StaticSubscribers::Auction::PuppyDeliveredHandler)
