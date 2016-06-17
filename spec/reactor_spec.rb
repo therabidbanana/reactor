@@ -34,6 +34,24 @@ describe Reactor do
           Reactor::Event.publish :test_event
         end
       end
+
+      it 'disables the subscriber outside the block' do
+        expect(Reactor::TEST_MODE_SUBSCRIBERS).to be_empty
+        Reactor.with_subscriber_enabled(subscriber) do
+          expect(Reactor::TEST_MODE_SUBSCRIBERS).to contain_exactly(subscriber)
+        end
+        expect(Reactor::TEST_MODE_SUBSCRIBERS).to be_empty
+      end
+
+      it 'correctly handles exceptions inside the block' do
+        expect(Reactor::TEST_MODE_SUBSCRIBERS).to be_empty
+        expect {
+          Reactor.with_subscriber_enabled(subscriber) do
+            raise RuntimeError
+          end
+        }.to raise_error(RuntimeError)
+        expect(Reactor::TEST_MODE_SUBSCRIBERS).to be_empty
+      end
     end
   end
 end

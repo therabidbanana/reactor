@@ -42,6 +42,7 @@ module Reactor
   def self.with_subscriber_enabled(klass)
     enable_test_mode_subscriber klass
     yield if block_given?
+  ensure
     disable_test_mode_subscriber klass
   end
 end
