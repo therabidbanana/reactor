@@ -1,5 +1,9 @@
 # Reactor Change Log
 
+0.12.2
+-----------
+Correctly handles exceptions in `with_subscriber_enabled`
+
 0.12.1
 -----------
 Fix unicode encoding protection to allow valid multi-byte unicode characters
