@@ -47,10 +47,5 @@ module Reactor
   end
 end
 
-# Temporarily avoid Rails 4.2.0 deprecation warning
-if ActiveRecord::VERSION::STRING > '4.2'
-  ActiveRecord::Base.raise_in_transactional_callbacks = true
-end
-
 ActiveRecord::Base.send(:include, Reactor::Publishable)
 ActiveRecord::Base.send(:include, Reactor::Subscribable)
