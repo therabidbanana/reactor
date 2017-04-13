@@ -31,6 +31,11 @@ end
 RSpec.configure do |config|
   # some (optional) config here
 
+  config.before(:each) do
+    Reactor.test_mode!
+    Reactor.clear_test_subscribers!
+  end
+
   # Runs Sidekiq jobs inline by default unless the RSpec metadata :sidekiq is specified,
   # in which case it will use the real Redis-backed Sidekiq queue
   config.before(:each, :sidekiq) do
