@@ -11,8 +11,10 @@ require 'reactor/testing/matchers'
 
 require 'rspec/its'
 
+REDIS_URL = ENV["REDISTOGO_URL"] || ENV["REDIS_URL"] || "redis://localhost:6379/4"
+
 Sidekiq.configure_server do |config|
-  config.redis = { url: ENV["REDISTOGO_URL"] }
+  config.redis = { url: REDIS_URL }
 
   database_url = ENV['DATABASE_URL']
   if database_url
@@ -22,7 +24,7 @@ Sidekiq.configure_server do |config|
 end
 
 Sidekiq.configure_client do |config|
-  config.redis = { url: ENV["REDISTOGO_URL"] }
+  config.redis = { url: REDIS_URL }
 end
 
 

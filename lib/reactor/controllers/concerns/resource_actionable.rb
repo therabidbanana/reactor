@@ -1,45 +1,47 @@
-module Reactor::ResourceActionable
-  extend ActiveSupport::Concern
+module Reactor
+  module ResourceActionable
+    extend ActiveSupport::Concern
 
-  included do
-    around_filter :infer_basic_action_event
-  end
-
-  def infer_basic_action_event
-    yield if block_given?
-
-    if (event_descriptor = "Reactor::ResourceActionable::#{action_name.camelize}Event".safe_constantize).present?
-      event_descriptor.perform_on self
-    else
-      action_event "#{resource_name}_#{action_name}"
-    end
-  end
-
-  module ClassMethods
-    def actionable_resource(ivar_name = nil)
-      @resource_ivar_name ||= ivar_name
+    included do
+      around_filter :infer_basic_action_event
     end
 
-    def nested_resource(ivar_name = nil)
-      @nested_resource_ivar_name ||= ivar_name
-    end
+    def infer_basic_action_event
+      yield if block_given?
 
-    # this is so our API controller subclasses can re-use the resource declarations
-    def inherited(subclass)
-      [:resource_ivar_name, :nested_resource_ivar_name].each do |inheritable_attribute|
-        instance_var = "@#{inheritable_attribute}"
-        subclass.instance_variable_set(instance_var, instance_variable_get(instance_var))
+      if (event_descriptor = "Reactor::ResourceActionable::#{action_name.camelize}Event".safe_constantize).present?
+        event_descriptor.perform_on self
+      else
+        action_event "#{resource_name}_#{action_name}"
       end
     end
-  end
 
-  def actionable_resource; instance_variable_get(self.class.actionable_resource); end
-  def nested_resource; self.class.nested_resource && instance_variable_get(self.class.nested_resource); end
+    module ClassMethods
+      def actionable_resource(ivar_name = nil)
+        @resource_ivar_name ||= ivar_name
+      end
 
-  private
+      def nested_resource(ivar_name = nil)
+        @nested_resource_ivar_name ||= ivar_name
+      end
 
-  def resource_name
-    self.class.actionable_resource.to_s.gsub('@','').underscore
+      # this is so our API controller subclasses can re-use the resource declarations
+      def inherited(subclass)
+        [:resource_ivar_name, :nested_resource_ivar_name].each do |inheritable_attribute|
+          instance_var = "@#{inheritable_attribute}"
+          subclass.instance_variable_set(instance_var, instance_variable_get(instance_var))
+        end
+      end
+    end
+
+    def actionable_resource; instance_variable_get(self.class.actionable_resource); end
+    def nested_resource; self.class.nested_resource && instance_variable_get(self.class.nested_resource); end
+
+    private
+
+    def resource_name
+      self.class.actionable_resource.to_s.gsub('@','').underscore
+    end
   end
 end
 

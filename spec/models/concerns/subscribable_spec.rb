@@ -43,9 +43,12 @@ end
 
 describe Reactor::Subscribable do
   let(:scheduled) { Sidekiq::ScheduledSet.new }
-  before { Reactor::TEST_MODE_SUBSCRIBERS.clear }
 
   describe 'on_event' do
+    before do
+      Reactor.enable_test_mode_subscriber(Auction)
+    end
+
     it 'binds block of code statically to event being fired' do
       expect_any_instance_of(Auction).to receive(:update_column).with(:status, 'first_bid_made')
       Reactor::Event.publish(:bid_made, target: Auction.create!(start_at: 10.minutes.from_now))
@@ -99,15 +102,20 @@ describe Reactor::Subscribable do
     end
 
     describe '#perform' do
+      around(:each) do |example|
+        Reactor.in_test_mode { example.run }
+      end
+
       it 'returns :__perform_aborted__ when Reactor is in test mode' do
         expect(Reactor::StaticSubscribers::TestModeAuction::TestPuppyDeliveredHandler.new.perform({})).to eq(:__perform_aborted__)
         Reactor::Event.publish(:test_puppy_delivered)
       end
 
       it 'performs normally when specifically enabled' do
-        Reactor.enable_test_mode_subscriber(TestModeAuction)
-        expect(Reactor::StaticSubscribers::TestModeAuction::TestPuppyDeliveredHandler.new.perform({})).not_to eq(:__perform_aborted__)
-        Reactor::Event.publish(:test_puppy_delivered)
+        Reactor.with_subscriber_enabled(TestModeAuction) do
+          expect(Reactor::StaticSubscribers::TestModeAuction::TestPuppyDeliveredHandler.new.perform({})).not_to eq(:__perform_aborted__)
+          Reactor::Event.publish(:test_puppy_delivered)
+        end
       end
     end
   end
