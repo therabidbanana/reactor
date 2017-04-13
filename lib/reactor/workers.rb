@@ -4,3 +4,4 @@ module Reactor
 end
 
 require "reactor/workers/event_worker"
+require "reactor/workers/delayed_worker"

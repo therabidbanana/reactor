@@ -1,16 +1,8 @@
-=begin
-EventWorker is an abstract worker for handling events defined by on_event.
-You can create handlers by subclassing and redefining the configuration class
-methods, or by using Reactor::Workers::EventWorker.dup and overriding the
-methods on the new class.
-=end
 module Reactor
   module Workers
-    class EventWorker
+    class DelayedWorker < EventWorker
 
-      include Sidekiq::Worker
-
-      CONFIG = [:source, :action, :async]
+      CONFIG = [:source, :action, :delay, :async]
 
       class_attribute *CONFIG
 
@@ -20,7 +12,8 @@ module Reactor
 
       def self.perform_where_needed(data)
         if async
-          perform_async(data)
+          perform_in(delay, data)
+          source
         else
           new.perform(data)
         end
@@ -48,6 +41,7 @@ module Reactor
           true
         end
       end
+
     end
   end
 end

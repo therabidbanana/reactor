@@ -27,14 +27,6 @@ module Reactor
       build_worker_class
     end
 
-    def create_static_subscriber(event, method = nil, options = {}, &block)
-      check_for_duplicate_handler_name(handler_name)
-
-      # return if the handler has already been defined (in the case of the class being reloaded)
-      return if handler_defined?
-      name_worker_class worker_class, @handler_name
-    end
-
     def handler_defined?
       namespace.const_defined?(handler_name)
     end
@@ -71,16 +63,30 @@ module Reactor
     end
 
     def build_worker_class
-      subscription = self
       return @worker_class = namespace.const_get(handler_name) if handler_defined?
-      worker_class = Class.new(Reactor::Workers::EventWorker) do
+
+      worker_class = delay == 0 ? build_event_worker : build_delayed_worker
+      namespace.const_set(handler_name, worker_class)
+      @worker_class = namespace.const_get(handler_name)
+    end
+
+    def build_event_worker
+      subscription = self
+      Class.new(Reactor::Workers::EventWorker) do
+        self.source = subscription.source
+        self.action = subscription.action
+        self.async  = subscription.async
+      end
+    end
+
+    def build_delayed_worker
+      subscription = self
+      Class.new(Reactor::Workers::DelayedWorker) do
         self.source = subscription.source
         self.action = subscription.action
         self.delay  = subscription.delay
         self.async  = subscription.async
       end
-      namespace.const_set(handler_name, worker_class)
-      @worker_class = namespace.const_get(handler_name)
     end
 
   end
