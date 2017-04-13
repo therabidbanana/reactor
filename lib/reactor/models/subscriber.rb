@@ -21,7 +21,7 @@ module Reactor
       end
 
       def fire(subscriber_id, data)
-        Reactor::Subscriber.find(subscriber_id).fire data
+        Reactor::Subscriber.find(subscriber_id).fire data.with_indifferent_access
       end
     end
   end

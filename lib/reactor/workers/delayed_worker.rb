@@ -1,6 +1,8 @@
 module Reactor
   module Workers
-    class DelayedWorker < EventWorker
+    class DelayedWorker
+
+      include Sidekiq::Worker
 
       CONFIG = [:source, :action, :delay, :async]
 

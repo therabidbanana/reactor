@@ -24,6 +24,10 @@ module Reactor
     subscribers[event_name] << worker_class
   end
 
+  def subscribers_for(event_name)
+    Array(subscribers[event_name]) + Array(subscribers['*'])
+  end
+
   def subscriber_namespace
     Reactor::StaticSubscribers
   end

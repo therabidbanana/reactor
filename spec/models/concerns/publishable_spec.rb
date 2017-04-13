@@ -106,9 +106,11 @@ describe Reactor::Publishable do
       it 'calls the subscriber when if is set to true' do
         auction.we_want_it = true
         auction.start_at = 3.day.from_now
+        allow(Reactor::Event).to receive(:perform_at)
         auction.save!
+        expect(Reactor::Event).to have_received(:perform_at).with(auction.start_at, :conditional_event_on_save, anything())
 
-        expect{ Reactor::Event.perform(@job_args[0], @job_args[1]) }.to change{ Sidekiq::Extensions::DelayedClass.jobs.size }
+        Reactor::Event.perform(@job_args[0], @job_args[1])
       end
 
       it 'does not call the subscriber when if is set to false' do
@@ -147,20 +149,27 @@ describe Reactor::Publishable do
     end
 
     it 'supports immediate events (on create) that get fired once' do
-      TestSubscriber.create! event_name: :bell
-      auction
-      expect(TestSubscriber.class_variable_get(:@@called)).to be_truthy
-      TestSubscriber.class_variable_set(:@@called, false)
-      auction.start_at = 1.day.from_now
-      auction.save
-      expect(TestSubscriber.class_variable_get(:@@called)).to be_falsey
+      Reactor.with_subscriber_enabled(Reactor::Subscriber) do
+        TestSubscriber.create! event_name: :bell
+        auction
+        expect(TestSubscriber.class_variable_get(:@@called)).to be_truthy
+        TestSubscriber.class_variable_set(:@@called, false)
+        auction.start_at = 1.day.from_now
+        auction.save
+        expect(TestSubscriber.class_variable_get(:@@called)).to be_falsey
+      end
     end
 
     it 'does publish an event scheduled for the future' do
+      Reactor.enable_test_mode_subscriber Reactor::Subscriber
+      Reactor.enable_test_mode_subscriber Auction
       TestSubscriber.create! event_name: :begin
       Auction.create!(pet: pet, start_at: Time.current + 1.week)
 
       expect(TestSubscriber.class_variable_get(:@@called)).to be_truthy
+
+      Reactor.disable_test_mode_subscriber Reactor::Subscriber
+      Reactor.disable_test_mode_subscriber Auction
     end
   end
 end
