@@ -1,12 +1,10 @@
 =begin
-EventWorker is an abstract worker for handling events defined by on_event.
-You can create handlers by subclassing and redefining the configuration class
-methods, or by using Reactor::Workers::EventWorker.dup and overriding the
-methods on the new class.
+MailerWorker has a bit more to do than EventWorker. It has to run the event, then if the
+output is a Mail::Message or the like it needs to deliver it like ActionMailer would
 =end
 module Reactor
   module Workers
-    class EventWorker
+    class MailerWorker
 
       include Sidekiq::Worker
 
@@ -37,10 +35,28 @@ module Reactor
         raise UnconfiguredWorkerError.new unless configured?
         return :__perform_aborted__ unless should_perform?
         event = Reactor::Event.new(data)
-        if action.is_a?(Symbol)
+        msg = if action.is_a?(Symbol)
           source.send(action, event)
         else
-          action.call(event)
+          source.new.instance_exec event, &action
+        end
+
+        if msg
+          deliver(msg)
+        else
+          raise UndeliverableMailError.new(
+            "#{target.name}##{method_name} returned an undeliverable mail object"
+          )
+        end
+      end
+
+      def deliver(msg)
+        if msg.respond_to?(:deliver_now)
+          # Rails 4.2/5.0
+          msg.deliver_now
+        else
+          # Rails 3.2/4.0/4.1 + Generic Mail::Message
+          msg.deliver
         end
       end
 

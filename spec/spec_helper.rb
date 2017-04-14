@@ -13,6 +13,8 @@ require 'rspec/its'
 
 REDIS_URL = ENV["REDISTOGO_URL"] || ENV["REDIS_URL"] || "redis://localhost:6379/4"
 
+ActionMailer::Base.delivery_method = :test
+
 Sidekiq.configure_server do |config|
   config.redis = { url: REDIS_URL }
 
@@ -34,6 +36,7 @@ RSpec.configure do |config|
   config.before(:each) do
     Reactor.test_mode!
     Reactor.clear_test_subscribers!
+    ActionMailer::Base.deliveries.clear
   end
 
   # Runs Sidekiq jobs inline by default unless the RSpec metadata :sidekiq is specified,

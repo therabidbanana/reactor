@@ -46,6 +46,10 @@ module Reactor
       @namespace = Reactor.subscriber_namespace.const_get(ns, false)
     end
 
+    def mailer_subscriber?
+      !!(source < ActionMailer::Base)
+    end
+
     private
 
     # options[:in_memory] is a legacy way of setting async to false -
@@ -65,7 +69,8 @@ module Reactor
     def build_worker_class
       return @worker_class = namespace.const_get(handler_name) if handler_defined?
 
-      worker_class = delay == 0 ? build_event_worker : build_delayed_worker
+
+      worker_class = mailer_subscriber? ? build_mailer_worker : build_event_worker
       namespace.const_set(handler_name, worker_class)
       @worker_class = namespace.const_get(handler_name)
     end
@@ -76,12 +81,13 @@ module Reactor
         self.source = subscription.source
         self.action = subscription.action
         self.async  = subscription.async
+        self.delay  = subscription.delay
       end
     end
 
-    def build_delayed_worker
+    def build_mailer_worker
       subscription = self
-      Class.new(Reactor::Workers::DelayedWorker) do
+      Class.new(Reactor::Workers::MailerWorker) do
         self.source = subscription.source
         self.action = subscription.action
         self.delay  = subscription.delay

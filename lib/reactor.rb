@@ -1,3 +1,7 @@
+require "active_record"
+require "active_support/hash_with_indifferent_access"
+require "action_mailer"
+
 require "reactor/version"
 require "reactor/errors"
 require "reactor/static_subscribers"

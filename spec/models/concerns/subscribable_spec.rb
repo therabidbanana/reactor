@@ -35,6 +35,33 @@ module MyNamespace
   end
 end
 
+class KittenMailer < ActionMailer::Base
+
+  include Reactor::Subscribable
+
+  on_event :kitten_born do |event|
+    mail(
+      to: 'admin@kittens.com',
+      from: 'test@kittens.com',
+      subject: 'New kitten born!'
+    ) do |format|
+      format.text { 'A new kitten was born!' }
+    end
+  end
+
+  on_event :kitten_streaming, :kitten_livestream
+
+  def kitten_livestream(event)
+    mail(
+      to: 'admin@kittens.com',
+      from: 'test@kittens.com',
+      subject: 'Livestreaming kitten videos'
+    ) do |format|
+      format.text { 'Your favorite kittens are now live!' }
+    end
+  end
+end
+
 Reactor.in_test_mode do
   class TestModeAuction < ActiveRecord::Base
     on_event :test_puppy_delivered, -> (event) { "success" }
@@ -119,6 +146,23 @@ describe Reactor::Subscribable do
           Reactor::Event.publish(:test_puppy_delivered)
         end
       end
+    end
+  end
+
+  describe 'mailers', type: :mailer do
+    before { Reactor.enable_test_mode_subscriber KittenMailer }
+    after  { Reactor.disable_test_mode_subscriber KittenMailer }
+
+    def deliveries
+      ActionMailer::Base.deliveries
+    end
+
+    it 'sends an email from a block on_event' do
+      expect { Reactor::Event.publish(:kitten_born) }.to change{ deliveries.count }.by(1)
+    end
+
+    it 'sends an email from a method on_event', focus: true do
+      expect { Reactor::Event.publish(:kitten_streaming) }.to change{ deliveries.count }.by(1)
     end
   end
 end
