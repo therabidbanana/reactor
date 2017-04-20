@@ -38,16 +38,10 @@ module Reactor
         msg = if action.is_a?(Symbol)
           source.send(action, event)
         else
-          source.new.instance_exec event, &action
+          source.class_exec event, &action
         end
 
-        if msg
-          deliver(msg)
-        else
-          raise UndeliverableMailError.new(
-            "#{target.name}##{method_name} returned an undeliverable mail object"
-          )
-        end
+        deliverable?(msg) ? deliver(msg) : msg
       end
 
       def deliver(msg)
@@ -58,6 +52,10 @@ module Reactor
           # Rails 3.2/4.0/4.1 + Generic Mail::Message
           msg.deliver
         end
+      end
+
+      def deliverable?(msg)
+        msg.respond_to?(:deliver_now) || msg.respond_to?(:deliver)
       end
 
       def should_perform?

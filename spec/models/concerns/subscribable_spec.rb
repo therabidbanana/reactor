@@ -39,17 +39,9 @@ class KittenMailer < ActionMailer::Base
 
   include Reactor::Subscribable
 
-  on_event :kitten_born do |event|
-    mail(
-      to: 'admin@kittens.com',
-      from: 'test@kittens.com',
-      subject: 'New kitten born!'
-    ) do |format|
-      format.text { 'A new kitten was born!' }
-    end
+  on_event :kitten_streaming do |event|
+    kitten_livestream(event)
   end
-
-  on_event :kitten_streaming, :kitten_livestream
 
   def kitten_livestream(event)
     mail(
@@ -155,10 +147,6 @@ describe Reactor::Subscribable do
 
     def deliveries
       ActionMailer::Base.deliveries
-    end
-
-    it 'sends an email from a block on_event' do
-      expect { Reactor::Event.publish(:kitten_born) }.to change{ deliveries.count }.by(1)
     end
 
     it 'sends an email from a method on_event', focus: true do
