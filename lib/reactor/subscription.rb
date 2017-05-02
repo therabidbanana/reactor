@@ -28,7 +28,8 @@ module Reactor
     end
 
     def handler_defined?
-      namespace.const_defined?(handler_name)
+      namespace.const_defined?(handler_name) &&
+        namespace.const_get(handler_name).ancestors.include?(Reactor.subscriber_namespace)
     end
 
     def event_handler_names

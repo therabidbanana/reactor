@@ -38,6 +38,9 @@ end
 class KittenMailer < ActionMailer::Base
 
   include Reactor::Subscribable
+  on_event :auction, handler_name: 'auction' do |event|
+    raise "Event auction"
+  end
 
   on_event :kitten_streaming do |event|
     kitten_livestream(event)
@@ -107,6 +110,14 @@ describe Reactor::Subscribable do
     it 'accepts wildcard event name' do
       expect_any_instance_of(Auction).to receive(:more_puppies!)
       Reactor::Event.publish(:another_event, actor: Auction.create!(start_at: 5.minutes.from_now))
+    end
+
+    # ran into a case where if a class for the event name already exists,
+    # it will re-open that class instead of putting it in the proper namespace
+    it 'handles names that already exist in the global namespace' do
+      expect(::Auction).to be_a(Class)
+      expect(KittenMailer).to be_a(Class) # have to ensure multiple subscribers are loaded
+      expect { Reactor::Event.publish :auction }.not_to raise_error(NoMethodError)
     end
 
     describe 'in_memory flag' do
