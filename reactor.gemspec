@@ -32,4 +32,5 @@ Gem::Specification.new do |spec|
   spec.add_development_dependency "pry-byebug"
   spec.add_development_dependency "sqlite3"
   spec.add_development_dependency "test_after_commit"
+  spec.add_development_dependency "simplecov"
 end

@@ -6,6 +6,12 @@ require 'support/active_record'
 require 'sidekiq'
 require 'sidekiq/testing/inline'
 require 'sidekiq/api'
+
+require 'simplecov'
+SimpleCov.start do
+  add_filter "/testing/"
+end
+
 require 'reactor'
 require 'reactor/testing/matchers'
 
