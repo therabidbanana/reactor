@@ -14,6 +14,16 @@ ActiveRecord::Migration.create_table :auctions do |t|
   t.timestamps null: false
 end
 
+ActiveRecord::Migration.create_table :publishers do |t|
+  t.string :name
+  t.datetime :start_at
+  t.datetime :close_at
+  t.boolean :we_want_it
+  t.integer :pet_id
+
+  t.timestamps null: false
+end
+
 ActiveRecord::Migration.create_table :subscribers do |t|
   t.string :event_name
   t.string :type

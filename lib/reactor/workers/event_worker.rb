@@ -15,7 +15,7 @@ module Reactor
       class_attribute *CONFIG
 
       def self.configured?
-        CONFIG.all? {|field| field.present? }
+        CONFIG.all? {|field| !self.send(field).nil? }
       end
 
       def self.perform_where_needed(data)
@@ -34,7 +34,7 @@ module Reactor
       end
 
       def perform(data)
-        raise UnconfiguredWorkerError.new unless configured?
+        raise_unconfigured! unless configured?
         return :__perform_aborted__ unless should_perform?
         event = Reactor::Event.new(data)
         if action.is_a?(Symbol)
@@ -50,6 +50,15 @@ module Reactor
         else
           true
         end
+      end
+
+      private
+
+      def raise_unconfigured!
+        settings = Hash[CONFIG.map {|s| [s, self.class.send(s)] }]
+        raise UnconfiguredWorkerError.new(
+          "#{self.class.name} is not properly configured! Here are the settings: #{settings}"
+        )
       end
     end
   end

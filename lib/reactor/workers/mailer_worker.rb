@@ -32,9 +32,10 @@ module Reactor
       end
 
       def perform(data)
-        raise UnconfiguredWorkerError.new unless configured?
+        raise_unconfigured! unless configured?
         return :__perform_aborted__ unless should_perform?
         event = Reactor::Event.new(data)
+
         msg = if action.is_a?(Symbol)
           source.send(action, event)
         else
@@ -64,6 +65,15 @@ module Reactor
         else
           true
         end
+      end
+
+      private
+
+      def raise_unconfigured!
+        settings = Hash[CONFIG.map {|s| [s, self.class.send(s)] }]
+        raise UnconfiguredWorkerError.new(
+          "#{self.class.name} is not properly configured! Here are the settings: #{settings}"
+        )
       end
     end
   end

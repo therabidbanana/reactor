@@ -38,6 +38,7 @@ end
 class KittenMailer < ActionMailer::Base
 
   include Reactor::Subscribable
+
   on_event :auction, handler_name: 'auction' do |event|
     raise "Event auction"
   end
@@ -114,10 +115,12 @@ describe Reactor::Subscribable do
 
     # ran into a case where if a class for the event name already exists,
     # it will re-open that class instead of putting it in the proper namespace
+    # which raised a NoMethodError for perform_where_needed
     it 'handles names that already exist in the global namespace' do
       expect(::Auction).to be_a(Class)
-      expect(KittenMailer).to be_a(Class) # have to ensure multiple subscribers are loaded
-      expect { Reactor::Event.publish :auction }.not_to raise_error(NoMethodError)
+      # have to ensure multiple subscribers are loaded
+      expect(KittenMailer).to be_a(Class)
+      expect { Reactor::Event.publish :auction }.not_to raise_error
     end
 
     describe 'in_memory flag' do
