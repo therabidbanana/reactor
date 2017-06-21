@@ -35,6 +35,29 @@ module MyNamespace
   end
 end
 
+class KittenMailer < ActionMailer::Base
+
+  include Reactor::Subscribable
+
+  on_event :auction, handler_name: 'auction' do |event|
+    raise "Event auction"
+  end
+
+  on_event :kitten_streaming do |event|
+    kitten_livestream(event)
+  end
+
+  def kitten_livestream(event)
+    mail(
+      to: 'admin@kittens.com',
+      from: 'test@kittens.com',
+      subject: 'Livestreaming kitten videos'
+    ) do |format|
+      format.text { 'Your favorite kittens are now live!' }
+    end
+  end
+end
+
 Reactor.in_test_mode do
   class TestModeAuction < ActiveRecord::Base
     on_event :test_puppy_delivered, -> (event) { "success" }
@@ -43,9 +66,12 @@ end
 
 describe Reactor::Subscribable do
   let(:scheduled) { Sidekiq::ScheduledSet.new }
-  before { Reactor::TEST_MODE_SUBSCRIBERS.clear }
 
   describe 'on_event' do
+    before do
+      Reactor.enable_test_mode_subscriber(Auction)
+    end
+
     it 'binds block of code statically to event being fired' do
       expect_any_instance_of(Auction).to receive(:update_column).with(:status, 'first_bid_made')
       Reactor::Event.publish(:bid_made, target: Auction.create!(start_at: 10.minutes.from_now))
@@ -63,6 +89,8 @@ describe Reactor::Subscribable do
     end
 
     describe 'binding symbol of class method' do
+      let(:pooped_handler) { Reactor::StaticSubscribers::Auction::PoopedHandler }
+
       it 'fires on event' do
         expect(Auction).to receive(:ring_bell)
         Reactor::Event.publish(:puppy_delivered)
@@ -70,7 +98,7 @@ describe Reactor::Subscribable do
 
       it 'can be delayed' do
         expect(Auction).to receive(:pick_up_poop)
-        expect(Auction).to receive(:delay_for).with(5.minutes).and_return(Auction)
+        expect(pooped_handler).to receive(:perform_in).with(5.minutes, anything).and_call_original
         Reactor::Event.perform('pooped', {})
       end
     end
@@ -83,6 +111,16 @@ describe Reactor::Subscribable do
     it 'accepts wildcard event name' do
       expect_any_instance_of(Auction).to receive(:more_puppies!)
       Reactor::Event.publish(:another_event, actor: Auction.create!(start_at: 5.minutes.from_now))
+    end
+
+    # ran into a case where if a class for the event name already exists,
+    # it will re-open that class instead of putting it in the proper namespace
+    # which raised a NoMethodError for perform_where_needed
+    it 'handles names that already exist in the global namespace' do
+      expect(::Auction).to be_a(Class)
+      # have to ensure multiple subscribers are loaded
+      expect(KittenMailer).to be_a(Class)
+      expect { Reactor::Event.publish :auction }.not_to raise_error
     end
 
     describe 'in_memory flag' do
@@ -99,16 +137,34 @@ describe Reactor::Subscribable do
     end
 
     describe '#perform' do
+      around(:each) do |example|
+        Reactor.in_test_mode { example.run }
+      end
+
       it 'returns :__perform_aborted__ when Reactor is in test mode' do
         expect(Reactor::StaticSubscribers::TestModeAuction::TestPuppyDeliveredHandler.new.perform({})).to eq(:__perform_aborted__)
         Reactor::Event.publish(:test_puppy_delivered)
       end
 
       it 'performs normally when specifically enabled' do
-        Reactor.enable_test_mode_subscriber(TestModeAuction)
-        expect(Reactor::StaticSubscribers::TestModeAuction::TestPuppyDeliveredHandler.new.perform({})).not_to eq(:__perform_aborted__)
-        Reactor::Event.publish(:test_puppy_delivered)
+        Reactor.with_subscriber_enabled(TestModeAuction) do
+          expect(Reactor::StaticSubscribers::TestModeAuction::TestPuppyDeliveredHandler.new.perform({})).not_to eq(:__perform_aborted__)
+          Reactor::Event.publish(:test_puppy_delivered)
+        end
       end
+    end
+  end
+
+  describe 'mailers', type: :mailer do
+    before { Reactor.enable_test_mode_subscriber KittenMailer }
+    after  { Reactor.disable_test_mode_subscriber KittenMailer }
+
+    def deliveries
+      ActionMailer::Base.deliveries
+    end
+
+    it 'sends an email from a method on_event', focus: true do
+      expect { Reactor::Event.publish(:kitten_streaming) }.to change{ deliveries.count }.by(1)
     end
   end
 end

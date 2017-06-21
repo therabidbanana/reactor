@@ -6,13 +6,23 @@ require 'support/active_record'
 require 'sidekiq'
 require 'sidekiq/testing/inline'
 require 'sidekiq/api'
+
+require 'simplecov'
+SimpleCov.start do
+  add_filter "/testing/"
+end
+
 require 'reactor'
 require 'reactor/testing/matchers'
 
 require 'rspec/its'
 
+REDIS_URL = ENV["REDISTOGO_URL"] || ENV["REDIS_URL"] || "redis://localhost:6379/4"
+
+ActionMailer::Base.delivery_method = :test
+
 Sidekiq.configure_server do |config|
-  config.redis = { url: ENV["REDISTOGO_URL"] }
+  config.redis = { url: REDIS_URL }
 
   database_url = ENV['DATABASE_URL']
   if database_url
@@ -22,12 +32,18 @@ Sidekiq.configure_server do |config|
 end
 
 Sidekiq.configure_client do |config|
-  config.redis = { url: ENV["REDISTOGO_URL"] }
+  config.redis = { url: REDIS_URL }
 end
 
 
 RSpec.configure do |config|
   # some (optional) config here
+
+  config.before(:each) do
+    Reactor.test_mode!
+    Reactor.clear_test_subscribers!
+    ActionMailer::Base.deliveries.clear
+  end
 
   # Runs Sidekiq jobs inline by default unless the RSpec metadata :sidekiq is specified,
   # in which case it will use the real Redis-backed Sidekiq queue

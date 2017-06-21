@@ -23,8 +23,15 @@ describe Reactor::Subscriber do
 
 
   describe 'matcher' do
-    before { MySubscriber.create!(event_name: '*') }
-    after { MySubscriber.destroy_all }
+    before do
+      MySubscriber.create!(event_name: '*')
+      Reactor.enable_test_mode_subscriber Reactor::Subscriber
+    end
+
+    after do
+      Reactor.disable_test_mode_subscriber Reactor::Subscriber
+      MySubscriber.destroy_all
+    end
 
     it 'can be set to star to bind to all events' do
       expect_any_instance_of(MySubscriber).to receive(:fire).with(hash_including('random' => 'data', 'event' => 'this_event'))

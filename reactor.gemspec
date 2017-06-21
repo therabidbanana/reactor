@@ -19,7 +19,10 @@ Gem::Specification.new do |spec|
   spec.require_paths = ["lib"]
 
   spec.add_dependency "sidekiq"
-  spec.add_dependency 'activerecord', '~> 5.0.1'
+
+  rails_version = '~> 5.0.2'
+
+  spec.add_dependency 'rails',  rails_version
 
   spec.add_development_dependency "bundler"
   spec.add_development_dependency "rake"
@@ -29,4 +32,5 @@ Gem::Specification.new do |spec|
   spec.add_development_dependency "pry-byebug"
   spec.add_development_dependency "sqlite3"
   spec.add_development_dependency "test_after_commit"
+  spec.add_development_dependency "simplecov"
 end

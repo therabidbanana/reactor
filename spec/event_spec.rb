@@ -63,8 +63,16 @@ describe Reactor::Event do
   end
 
   describe 'perform' do
-    before { Reactor::Subscriber.create(event_name: :user_did_this) }
-    after { Reactor::Subscriber.destroy_all }
+    before do
+      Reactor::Subscriber.create(event_name: :user_did_this)
+      Reactor.enable_test_mode_subscriber(Reactor::Subscriber)
+    end
+
+    after do
+      Reactor::Subscriber.destroy_all
+      Reactor.enable_test_mode_subscriber(Reactor::Subscriber)
+    end
+
     it 'fires all subscribers' do
       expect_any_instance_of(Reactor::Subscriber).to receive(:fire).with(hash_including(actor_id: model.id.to_s))
       Reactor::Event.perform(event_name, actor_id: model.id.to_s, actor_type: model.class.to_s)

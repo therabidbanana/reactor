@@ -11,6 +11,8 @@ describe Reactor do
   let(:subscriber) { SomeClass }
 
   describe '.test_mode!' do
+    before { Reactor.disable_test_mode! }
+
     it 'sets Reactor into test mode' do
       expect(Reactor.test_mode?).to be_falsey
       Reactor.test_mode!

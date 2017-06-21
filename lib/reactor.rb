@@ -1,49 +1,39 @@
+require "active_record"
+require "active_support/hash_with_indifferent_access"
+require "action_mailer"
+
 require "reactor/version"
-require "reactor/models/concerns/publishable"
-require "reactor/models/concerns/subscribable"
-require "reactor/models/concerns/optionally_subclassable"
-require "reactor/models/subscriber"
-require "reactor/controllers/concerns/resource_actionable"
+require "reactor/errors"
+require "reactor/static_subscribers"
+require "reactor/workers"
+require "reactor/subscription"
+require "reactor/models"
+require "reactor/controllers"
 require "reactor/event"
 
+# FIXME: should only be included in test environments
+require "reactor/testing"
+
 module Reactor
-  SUBSCRIBERS = {}
-  TEST_MODE_SUBSCRIBERS = Set.new
-  @@test_mode = false
+  SUBSCRIBERS = {}.with_indifferent_access
 
-  module StaticSubscribers
+  module_function
+
+  def subscribers
+    SUBSCRIBERS
   end
 
-  def self.test_mode?
-    @@test_mode
+  def add_subscriber(event_name, worker_class)
+    subscribers[event_name] ||= []
+    subscribers[event_name] << worker_class
   end
 
-  def self.test_mode!
-    @@test_mode = true
+  def subscribers_for(event_name)
+    Array(subscribers[event_name]) + Array(subscribers['*'])
   end
 
-  def self.disable_test_mode!
-    @@test_mode = false
-  end
-
-  def self.in_test_mode
-    test_mode!
-    (yield if block_given?).tap { disable_test_mode! }
-  end
-
-  def self.enable_test_mode_subscriber(klass)
-    TEST_MODE_SUBSCRIBERS << klass
-  end
-
-  def self.disable_test_mode_subscriber(klass)
-    TEST_MODE_SUBSCRIBERS.delete klass
-  end
-
-  def self.with_subscriber_enabled(klass)
-    enable_test_mode_subscriber klass
-    yield if block_given?
-  ensure
-    disable_test_mode_subscriber klass
+  def subscriber_namespace
+    Reactor::StaticSubscribers
   end
 end
 
