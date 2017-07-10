@@ -18,11 +18,8 @@ Gem::Specification.new do |spec|
   spec.test_files    = spec.files.grep(%r{^(test|spec|features)/})
   spec.require_paths = ["lib"]
 
-  spec.add_dependency "sidekiq"
-
-  rails_version = '~> 5.0.2'
-
-  spec.add_dependency 'rails',  rails_version
+  spec.add_dependency 'rails', '~> 5.0.4'
+  spec.add_dependency "sidekiq", '> 4.0'
 
   spec.add_development_dependency "bundler"
   spec.add_development_dependency "rake"
@@ -33,4 +30,5 @@ Gem::Specification.new do |spec|
   spec.add_development_dependency "sqlite3"
   spec.add_development_dependency "test_after_commit"
   spec.add_development_dependency "simplecov"
+  spec.add_development_dependency "appraisal"
 end

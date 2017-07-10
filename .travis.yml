@@ -1,5 +1,7 @@
 language: ruby
-rvm:
-  - 2.3.0
 services:
   - redis-server
+gemfile:
+  - gemfiles/sidekiq_4.gemfile
+  - gemfiles/sidekiq_5.gemfile
+script: 'bundle exec rake'
