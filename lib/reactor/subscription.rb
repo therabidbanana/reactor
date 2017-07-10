@@ -29,7 +29,7 @@ module Reactor
 
     def handler_defined?
       namespace.const_defined?(handler_name) &&
-        namespace.const_get(handler_name).ancestors.include?(Reactor.subscriber_namespace)
+        namespace.const_get(handler_name).parents.include?(Reactor.subscriber_namespace)
     end
 
     def event_handler_names
@@ -68,8 +68,7 @@ module Reactor
     end
 
     def build_worker_class
-      return @worker_class = namespace.const_get(handler_name) if handler_defined?
-
+      namespace.send(:remove_const, handler_name) if handler_defined?
 
       worker_class = mailer_subscriber? ? build_mailer_worker : build_event_worker
       namespace.const_set(handler_name, worker_class)
