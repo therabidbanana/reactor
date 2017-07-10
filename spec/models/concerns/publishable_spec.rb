@@ -118,7 +118,7 @@ describe Reactor::Publishable do
         publisher.start_at = 3.days.from_now
         publisher.save!
 
-        expect{ Reactor::Event.perform(@job_args[0], @job_args[1]) }.to_not change{ Sidekiq::Extensions::DelayedClass.jobs.size }
+        expect{ Reactor::Event.perform(@job_args[0], @job_args[1]) }.to_not change{ Sidekiq::Queues.jobs_by_queue.values.flatten.count }
       end
 
       it 'keeps the if intact when rescheduling' do

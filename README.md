@@ -142,7 +142,7 @@ Once you write your own action_event to describe your event data model's base at
 <dt>index =></dt>
 <dd>"pets_indexed"</dd>
 </dl>
- 
+
 <dl>
 <dt>show =></dt>
 <dd>"pet_viewed", target: @pet</dd>
@@ -167,7 +167,7 @@ Once you write your own action_event to describe your event data model's base at
 
 <dl>
 <dt>update =></dt>
-<dd> 
+<dd>
 when valid => "pet_updated", target: @pet, changes: @pet.previous_changes.as_json
 <br />
   when invalid => "pet_update_failed", target: @pet,
@@ -241,6 +241,12 @@ for your testing convenience.
 3. Commit your changes (`git commit -am 'Add some feature'`)
 4. Push to the branch (`git push origin my-new-feature`)
 5. Create new Pull Request
+
+For testing Reactor itself we use Thoughtbot's [appraisal gem](https://github.com/thoughtbot/appraisal). This lets us test against multiple versions of Sidekiq, Rails, etc. To install appraisal and set up multiple dependencies, do the following:
+
+1. `bundle install` - this will install up-to-date dependencies and appraisal
+2. `appraisal install` - installs dependencies for appraisal groups
+3. `appraisal rake` - runs specs for each appraisal group
 
 ## Open Source by [Hired](https://hired.com/?utm_source=opensource&utm_medium=reactor&utm_campaign=readme)
 
