@@ -18,3 +18,4 @@ tags
 .rvmrc
 .ruby-gemset
 .idea
+gemfiles/*.lock
