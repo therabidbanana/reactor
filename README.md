@@ -234,10 +234,29 @@ end
 
 for your testing convenience.
 
+
+### Production Deployments
+
+TLDR; Everything is a Sidekiq::Job, so all the same gotchas apply with regard to removing & renaming jobs that may have a live reference sitting in the queue. (AKA, you'll start seeing 'const undefined' exceptions when the job gets picked up if you've already deleted/renamed the job code.)
+
+#### Adding Events and Subscribers
+
+This is as easy as write + deploy. Of course your events getting fired won't have a subscriber pick them up until the new subscriber code is deployed in your sidekiq instances, but that's not too surprising.
+
+#### Removing Events and Subscribers
+
+Removing an event is as simple as deleting the line of code that `publish`es it.
+Removing a subscriber requires awareness of basic Sidekiq principles.
+
+1. Make the handler code a NOOP but leave it in the code. (gut it)
+2. Deploy & let enqueued subscriber jobs get processed & emptied.
+3. _THEN_ delete the container class/block and deploy the full deletion knowing that the queue no longer has references to it.
+
+
 ## Contributing
 
 1. Fork it
-2. Create your feature branch (`git checkout -b my-new-feature`)
+2. Create your feature/fix branch (`git checkout -b my-new-feature`)
 3. Commit your changes (`git commit -am 'Add some feature'`)
 4. Push to the branch (`git push origin my-new-feature`)
 5. Create new Pull Request
