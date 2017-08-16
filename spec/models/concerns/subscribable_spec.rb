@@ -15,8 +15,12 @@ class Auction < ActiveRecord::Base
     event.actor.more_puppies! if event.name == 'another_event'
   end
 
-  on_event :cat_delivered, in_memory: true do |event|
+  on_event :cat_delivered, async: false do |event|
     puppies!
+  end
+
+  on_event :a_high_frequency_event, deprecated: true do |event|
+    raise 'hell'
   end
 
   def self.ring_bell(event)
@@ -123,16 +127,25 @@ describe Reactor::Subscribable do
       expect { Reactor::Event.publish :auction }.not_to raise_error
     end
 
-    describe 'in_memory flag' do
-      it 'doesnt fire perform_async when true' do
+    describe 'async flag' do
+      it 'doesnt fire perform_async when false' do
         expect(Auction).to receive(:puppies!)
         expect(Reactor::StaticSubscribers::Auction::CatDeliveredHandler).not_to receive(:perform_async)
         Reactor::Event.publish(:cat_delivered)
       end
 
-      it 'fires perform_async when falsey' do
+      it 'fires perform_async when true / default' do
         expect(Reactor::StaticSubscribers::Auction::WildcardHandler).to receive(:perform_async)
         Reactor::Event.publish(:puppy_delivered)
+      end
+    end
+
+    describe 'deprecate flag for high-frequency events in production deployments' do
+      it 'doesnt enqueue subscriber worker when true' do
+        # so subscriber can be safely deleted in next deploy
+        expect {
+          Reactor::Event.publish(:a_high_frequency_event)
+        }.to_not raise_exception
       end
     end
 

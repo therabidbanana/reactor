@@ -16,6 +16,7 @@ class MyMailerWorker < Reactor::Workers::MailerWorker
   self.action = :fire_mailer
   self.async  = false
   self.delay  = 0
+  self.deprecated = false
 end
 
 class MyBlockMailerWorker < Reactor::Workers::MailerWorker
@@ -23,6 +24,7 @@ class MyBlockMailerWorker < Reactor::Workers::MailerWorker
   self.async  = false
   self.delay  = 0
   self.action = lambda { |event| fire_mailer(event) }
+  self.deprecated = false
 end
 
 describe Reactor::Workers::MailerWorker do

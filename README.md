@@ -248,9 +248,15 @@ This is as easy as write + deploy. Of course your events getting fired won't hav
 Removing an event is as simple as deleting the line of code that `publish`es it.
 Removing a subscriber requires awareness of basic Sidekiq principles.
 
-1. Make the handler code a NOOP but leave it in the code. (gut it)
-2. Deploy & let enqueued subscriber jobs get processed & emptied.
-3. _THEN_ delete the container class/block and deploy the full deletion knowing that the queue no longer has references to it.
+**Is the subscriber that you're deleting virtually guaranteed to have a worker for it sitting in the queue when your deletion is deployed?**
+
+If yes -> deprecate your subscriber first to ensure there are no references left in Redis. This will prevent Reactor from enqueuing more workers for it and make it safe for you delete in a secondry deploy.
+```
+on_event :high_frequency_event, :do_something, deprecated: true
+```
+
+If no -> you can probably just delete the subscriber. 
+In the worst case scenario, you get some background exceptions for a job you didn't intend to have run anyway. Pick your poison. 
 
 
 ## Contributing

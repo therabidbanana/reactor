@@ -10,7 +10,7 @@ module Reactor
 
       include Sidekiq::Worker
 
-      CONFIG = [:source, :action, :async, :delay]
+      CONFIG = [:source, :action, :async, :delay, :deprecate]
 
       class_attribute *CONFIG
 
@@ -19,7 +19,9 @@ module Reactor
       end
 
       def self.perform_where_needed(data)
-        if delay > 0
+        if deprecate
+          return
+        elsif delay > 0
           perform_in(delay, data)
         elsif async
           perform_async(data)
