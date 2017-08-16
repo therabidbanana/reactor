@@ -6,32 +6,7 @@ module Reactor
   module Workers
     class MailerWorker
 
-      include Sidekiq::Worker
-
-      CONFIG = [:source, :action, :async, :delay, :deprecate]
-
-      class_attribute *CONFIG
-
-      def self.configured?
-        CONFIG.all? {|field| field.present? }
-      end
-
-      def self.perform_where_needed(data)
-        if deprecate
-          return
-        elsif delay > 0
-          perform_in(delay, data)
-        elsif async
-          perform_async(data)
-        else
-          new.perform(data)
-        end
-        source
-      end
-
-      def configured?
-        self.class.configured?
-      end
+      include Reactor::Workers::Configuration
 
       def perform(data)
         raise_unconfigured! unless configured?
@@ -61,22 +36,6 @@ module Reactor
         msg.respond_to?(:deliver_now) || msg.respond_to?(:deliver)
       end
 
-      def should_perform?
-        if Reactor.test_mode?
-          Reactor.test_mode_subscriber_enabled? source
-        else
-          true
-        end
-      end
-
-      private
-
-      def raise_unconfigured!
-        settings = Hash[CONFIG.map {|s| [s, self.class.send(s)] }]
-        raise UnconfiguredWorkerError.new(
-          "#{self.class.name} is not properly configured! Here are the settings: #{settings}"
-        )
-      end
     end
   end
 end

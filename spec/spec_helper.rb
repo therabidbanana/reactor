@@ -3,6 +3,7 @@ require 'bundler/setup'
 require 'pry'
 
 require 'support/active_record'
+require 'support/shared_examples'
 require 'sidekiq'
 require 'sidekiq/testing/inline'
 require 'sidekiq/api'

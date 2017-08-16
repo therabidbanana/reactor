@@ -36,6 +36,8 @@ describe Reactor::Workers::MailerWorker do
     allow_any_instance_of(klass).to receive(:should_perform?).and_return(true)
   end
 
+  it_behaves_like 'configurable subscriber worker'
+
   it 'sends an email from symbol method name' do
     expect { subject }.to change { ActionMailer::Base.deliveries.count }.by(1)
   end
