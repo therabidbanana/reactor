@@ -1,7 +1,7 @@
 PATH
   remote: .
   specs:
-    reactor (0.15.1)
+    reactor (0.16.0)
       rails
       sidekiq (> 4.0)
 
@@ -174,4 +174,4 @@ DEPENDENCIES
   test_after_commit
 
 BUNDLED WITH
-   1.15.2
+   1.15.3
