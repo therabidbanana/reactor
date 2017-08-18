@@ -1,5 +1,10 @@
 # Reactor Change Log
 
+0.16.0
+----------
+Subscribers can now deprecate themselves for safe removal from production deployments.
+... 
+
 0.12.2
 -----------
 Correctly handles exceptions in `with_subscriber_enabled`
