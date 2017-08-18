@@ -3,11 +3,11 @@ module Reactor
     module Configuration
       extend ActiveSupport::Concern
 
+      CONFIG = [:source, :action, :async, :delay, :deprecated]
+
       included do
         include Sidekiq::Worker
-
-        CONFIG = [:source, :action, :async, :delay, :deprecated]
-
+        
         class_attribute *CONFIG
       end
 
