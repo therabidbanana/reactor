@@ -234,6 +234,20 @@ end
 
 for your testing convenience.
 
+#### Matchers
+
+You can clean up some event assertions with these somewhat imperfect matchers.
+
+```
+# DRY up strict event & data assertions.
+expect { some_thing }.to publish_event(:some_event, actor: this_user, target: this_object)
+```
+
+```
+# DRY up multi-event assertions. Unfortunately can't test key-values with this at the moment.
+expect { some_thing }.to publish_events(:some_event, :another_event)
+```
+
 
 ### Production Deployments
 

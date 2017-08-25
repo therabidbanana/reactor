@@ -1,3 +1,10 @@
+#
+# DRY up strict event & data assertions.
+#
+# Example:
+#
+#  expect { some_thing }.to publish_event(:some_event, actor: this_user, target: this_object)
+#
 RSpec::Matchers.define :publish_event do |name, data = {}|
   supports_block_expectations
 
@@ -12,6 +19,14 @@ RSpec::Matchers.define :publish_event do |name, data = {}|
   end
 end
 
+
+#
+# DRY up multi-event assertions. Unfortunately can't test key-values with this at the moment.
+#
+# Example:
+#
+#  expect { some_thing }.to publish_events(:some_event, :another_event)
+#
 RSpec::Matchers.define :publish_events do |*names|
   supports_block_expectations
 
